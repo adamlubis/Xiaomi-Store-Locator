@@ -1,66 +1,50 @@
-// Inisialisasi Peta
-const map = L.map('map').setView([-2.548926, 118.014863], 5);
-
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '© OpenStreetMap contributors'
-}).addTo(map);
-
+let map;
+let markerCluster;
 let allStores = [];
 let filteredStores = [];
-let markersLayer = L.layerGroup().addTo(map);
-let radiusCirclesGroup = L.layerGroup().addTo(map);
+let markersMap = new Map();
 
-// Marker Icons
-const orangeIcon = L.divIcon({
-  className: 'custom-icon',
-  html: `<div style="background-color: #ff6b00; width: 14px; height: 14px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 6px rgba(0,0,0,0.3);"></div>`,
-  iconSize: [14, 14],
-  iconAnchor: [7, 7]
-});
+// Inisialisasi Peta
+function initMap() {
+  map = L.map('map').setView([-2.548926, 118.0148634], 5); // Center Indonesia
 
-const blueIcon = L.divIcon({
-  className: 'custom-icon',
-  html: `<div style="background-color: #0078ff; width: 14px; height: 14px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 6px rgba(0,0,0,0.3);"></div>`,
-  iconSize: [14, 14],
-  iconAnchor: [7, 7]
-});
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map);
 
-function parseNum(val) {
-  if (typeof val === 'number') return val;
-  if (typeof val === 'string') return parseFloat(val.replace(',', '.').trim());
-  return NaN;
+  markerCluster = L.markerClusterGroup();
+  map.addLayer(markerCluster);
 }
 
-// Load Data
+// Load Data Stores
 async function loadStoresData() {
-  const paths = ['../output/stores.json', './output/stores.json', '/output/stores.json'];
-  let data = null;
+  const paths = [
+    './output/stores.json',
+    'output/stores.json',
+    '../output/stores.json',
+    'stores.json'
+  ];
 
   for (const path of paths) {
     try {
       const res = await fetch(path);
       if (res.ok) {
-        data = await res.json();
-        break;
+        allStores = await res.json();
+        filteredStores = [...allStores];
+        populateFilters();
+        renderStores();
+        return;
       }
-    } catch (e) {}
+    } catch (e) {
+      console.warn(`Gagal memuat data dari ${path}`);
+    }
   }
-
-  if (data && Array.isArray(data)) {
-    allStores = data;
-    filteredStores = [...allStores];
-    populateFilters();
-    updateDashboard();
-  } else {
-    alert("Gagal membaca stores.json. Pastikan Live Server berjalan dan JSON valid.");
-  }
+  console.error('Data stores.json tidak ditemukan!');
 }
 
-loadStoresData();
-
-// Populate Select Filters
+// Populate Dropdown Filters (Tanpa kata "Semua")
 function populateFilters() {
-  const filterKeys = [
+  const filters = [
     { id: 'filter-partner', key: 'Partner' },
     { id: 'filter-region', key: 'Region' },
     { id: 'filter-province', key: 'Province' },
@@ -69,26 +53,25 @@ function populateFilters() {
     { id: 'filter-status', key: 'Status' }
   ];
 
-  filterKeys.forEach(f => {
+  filters.forEach(f => {
     const select = document.getElementById(f.id);
-    const unique = [...new Set(allStores.map(item => item[f.key]).filter(Boolean))].sort();
+    if (!select) return;
 
-    select.innerHTML = `<option value="">Semua ${f.key}</option>`;
-    unique.forEach(val => {
+    // Ambil nilai unik dan urutkan
+    const uniqueValues = [...new Set(allStores.map(s => s[f.key]).filter(Boolean))].sort();
+
+    select.innerHTML = `<option value="">${f.key}</option>`;
+    uniqueValues.forEach(val => {
       const opt = document.createElement('option');
       opt.value = val;
       opt.textContent = val;
       select.appendChild(opt);
     });
-
-    select.addEventListener('change', applyFilters);
   });
-
-  document.getElementById('search-input').addEventListener('input', applyFilters);
 }
 
-// Filter Logic
-function applyFilters() {
+// Filter Data
+function filterStores() {
   const searchVal = document.getElementById('search-input').value.toLowerCase();
   const partnerVal = document.getElementById('filter-partner').value;
   const regionVal = document.getElementById('filter-region').value;
@@ -99,138 +82,117 @@ function applyFilters() {
 
   filteredStores = allStores.filter(store => {
     const matchSearch = !searchVal || 
-      (store["Store Name"] || '').toLowerCase().includes(searchVal) ||
-      (store["Partner"] || '').toLowerCase().includes(searchVal) ||
-      (store["City"] || '').toLowerCase().includes(searchVal);
+      (store['Store Name'] && store['Store Name'].toLowerCase().includes(searchVal)) ||
+      (store['City'] && store['City'].toLowerCase().includes(searchVal)) ||
+      (store['Partner'] && store['Partner'].toLowerCase().includes(searchVal)) ||
+      (store['Address'] && store['Address'].toLowerCase().includes(searchVal));
 
-    return matchSearch &&
-           (partnerVal === '' || store["Partner"] === partnerVal) &&
-           (regionVal === '' || store["Region"] === regionVal) &&
-           (provinceVal === '' || store["Province"] === provinceVal) &&
-           (cityVal === '' || store["City"] === cityVal) &&
-           (typeVal === '' || store["Type"] === typeVal) &&
-           (statusVal === '' || store["Status"] === statusVal);
+    const matchPartner = !partnerVal || store['Partner'] === partnerVal;
+    const matchRegion = !regionVal || store['Region'] === regionVal;
+    const matchProvince = !provinceVal || store['Province'] === provinceVal;
+    const matchCity = !cityVal || store['City'] === cityVal;
+    const matchType = !typeVal || store['Type'] === typeVal;
+    const matchStatus = !statusVal || store['Status'] === statusVal;
+
+    return matchSearch && matchPartner && matchRegion && matchProvince && matchCity && matchType && matchStatus;
   });
 
-  updateDashboard();
+  renderStores();
 }
 
-function resetFilters() {
-  document.getElementById('search-input').value = '';
-  ['filter-partner', 'filter-region', 'filter-province', 'filter-city', 'filter-type', 'filter-status'].forEach(id => {
-    document.getElementById(id).value = '';
-  });
-  applyFilters();
-}
+// Render Marker dan Sidebar List
+function renderStores() {
+  markerCluster.clearLayers();
+  markersMap.clear();
 
-// Update UI (KPI, List, Markers)
-function updateDashboard() {
-  const total = filteredStores.length;
-  const existing = filteredStores.filter(s => (s["Status"]||'').toLowerCase() === 'existing').length;
-  const progress = filteredStores.filter(s => (s["Status"]||'').toLowerCase() === 'progress').length;
+  const storeListEl = document.getElementById('store-list');
+  storeListEl.innerHTML = '';
 
-  document.getElementById('stat-total').textContent = total;
-  document.getElementById('stat-existing').textContent = existing;
-  document.getElementById('stat-progress').textContent = progress;
-  document.getElementById('stores-found-text').textContent = `${total} toko ditemukan`;
+  document.getElementById('store-count').textContent = `${filteredStores.length} toko ditemukan`;
 
-  renderStoreList();
-  renderMarkers();
-}
-
-// Render Sidebar Cards
-function renderStoreList() {
-  const listContainer = document.getElementById('store-list');
-  listContainer.innerHTML = '';
+  const bounds = [];
 
   filteredStores.forEach(store => {
-    const isExisting = (store["Status"] || '').toLowerCase() === 'existing';
-    const badgeClass = isExisting ? 'badge-existing' : 'badge-progress';
-    
+    const lat = parseFloat(store.Latitude);
+    const lng = parseFloat(store.Longitude);
+
+    // Bikin Marker jika Lat Lng Valid
+    if (!isNaN(lat) && !isNaN(lng)) {
+      const marker = L.marker([lat, lng]);
+      
+      const popupContent = `
+        <div class="popup-card">
+          <span class="badge ${store.Status === 'Open' ? 'badge-open' : 'badge-closed'}">${store.Status || 'Active'}</span>
+          <h3>${store['Store Name'] || 'Xiaomi Store'}</h3>
+          <p><strong>Partner:</strong> ${store.Partner || '-'}</p>
+          <p><strong>Region:</strong> ${store.Region || '-'}, ${store.City || '-'}</p>
+          <p><strong>Alamat:</strong> ${store.Address || '-'}</p>
+        </div>
+      `;
+      marker.bindPopup(popupContent);
+      markerCluster.addLayer(marker);
+      markersMap.set(store['Store Name'], marker);
+      bounds.push([lat, lng]);
+    }
+
+    // Bikin Card Sidebar
     const card = document.createElement('div');
     card.className = 'store-card';
     card.innerHTML = `
       <div class="card-header">
-        <div class="card-title">${store["Store Name"] || 'Xiaomi Store'}</div>
-        <span class="badge ${badgeClass}">${store["Status"] || 'N/A'}</span>
+        <h4>${store['Store Name']}</h4>
+        <span class="badge ${store.Status === 'Open' ? 'badge-open' : 'badge-closed'}">${store.Status || 'Active'}</span>
       </div>
-      <div class="card-partner">🏢 ${store["Partner"] || '-'}</div>
-      <div class="card-address">📍 ${store["City"] || ''}, ${store["Province"] || ''}</div>
+      <p class="store-partner"><strong>Partner:</strong> ${store.Partner || '-'}</p>
+      <p class="store-location">📍 ${store.City || '-'}, ${store.Province || '-'}</p>
+      <p class="store-address">${store.Address || '-'}</p>
     `;
 
     card.addEventListener('click', () => {
-      const lat = parseNum(store["Latitude"]);
-      const lng = parseNum(store["Longitude"]);
       if (!isNaN(lat) && !isNaN(lng)) {
-        map.flyTo([lat, lng], 14);
-        drawRadiusCircles(lat, lng);
+        map.setView([lat, lng], 15);
+        const marker = markersMap.get(store['Store Name']);
+        if (marker) {
+          markerCluster.zoomToShowLayer(marker, () => {
+            marker.openPopup();
+          });
+        }
       }
     });
 
-    listContainer.appendChild(card);
+    storeListEl.appendChild(card);
   });
+
+  if (bounds.length > 0) {
+    map.fitBounds(bounds, { padding: [30, 30] });
+  }
 }
 
-// Render Markers & Popup
-function renderMarkers() {
-  markersLayer.clearLayers();
+// Reset Filter
+function resetFilters() {
+  document.getElementById('search-input').value = '';
+  document.getElementById('filter-partner').value = '';
+  document.getElementById('filter-region').value = '';
+  document.getElementById('filter-province').value = '';
+  document.getElementById('filter-city').value = '';
+  document.getElementById('filter-type').value = '';
+  document.getElementById('filter-status').value = '';
 
-  filteredStores.forEach(store => {
-    const lat = parseNum(store["Latitude"]);
-    const lng = parseNum(store["Longitude"]);
-
-    if (isNaN(lat) || isNaN(lng)) return;
-
-    const status = (store["Status"] || '').toLowerCase();
-    const icon = status === 'existing' ? orangeIcon : blueIcon;
-
-    const marker = L.marker([lat, lng], { icon: icon });
-
-    const rawCost = parseNum(store["Rental Cost"]);
-    const rentalCost = !isNaN(rawCost) ? `Rp ${new Intl.NumberFormat('id-ID').format(rawCost)}` : '-';
-
-    const popupContent = `
-      <div style="font-weight:bold; font-size:13px; margin-bottom:4px;">${store["Store Name"]}</div>
-      <div style="font-size:11px; color:#666; margin-bottom:8px;">${store["Address"] || ''}</div>
-      <div style="font-size:11px; line-height:1.5;">
-        <b>Partner:</b> ${store["Partner"] || '-'}<br>
-        <b>Region:</b> ${store["Region"] || '-'}<br>
-        <b>Status:</b> ${store["Status"] || '-'}<br>
-        <b>Size:</b> ${store["Store Size"] || '-'} sqm<br>
-        <b>Rental:</b> ${rentalCost}
-      </div>
-    `;
-
-    marker.bindPopup(popupContent);
-
-    marker.on('click', () => {
-      drawRadiusCircles(lat, lng);
-    });
-
-    markersLayer.addLayer(marker);
-  });
+  filteredStores = [...allStores];
+  renderStores();
 }
 
-// Draw Radius Circles (2 KM & 5 KM)
-function drawRadiusCircles(lat, lng) {
-  radiusCirclesGroup.clearLayers();
+// Event Listeners
+document.addEventListener('DOMContentLoaded', () => {
+  initMap();
+  loadStoresData();
 
-  const circle2k = L.circle([lat, lng], {
-    color: '#ff6b00',
-    fillColor: '#ff6b00',
-    fillOpacity: 0.1,
-    radius: 2000,
-    dashArray: '4, 4'
-  });
-
-  const circle5k = L.circle([lat, lng], {
-    color: '#0078ff',
-    fillColor: '#0078ff',
-    fillOpacity: 0.05,
-    radius: 5000,
-    dashArray: '6, 6'
-  });
-
-  radiusCirclesGroup.addLayer(circle2k);
-  radiusCirclesGroup.addLayer(circle5k);
-}
+  document.getElementById('search-input').addEventListener('input', filterStores);
+  document.getElementById('filter-partner').addEventListener('change', filterStores);
+  document.getElementById('filter-region').addEventListener('change', filterStores);
+  document.getElementById('filter-province').addEventListener('change', filterStores);
+  document.getElementById('filter-city').addEventListener('change', filterStores);
+  document.getElementById('filter-type').addEventListener('change', filterStores);
+  document.getElementById('filter-status').addEventListener('change', filterStores);
+  document.getElementById('reset-btn').addEventListener('click', resetFilters);
+});
