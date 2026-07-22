@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IDN - Xiaomi Authorized Store Locator</title>
+  
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- HEADER / NAVBAR TOP -->
+  <header class="navbar">
+    <div class="brand">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/2/29/Xiaomi_logo.svg" alt="Xiaomi Logo" class="logo">
+      <div>
+        <h1>IDN - Xiaomi Authorized Store Locator</h1>
+        <p>Location intelligence & store coverage mapping</p>
+      </div>
+    </div>
+
+    <!-- STATS COUNTER -->
+    <div class="stats-container">
+      <div class="stat-card">
+        <span class="stat-label">TOTAL STORES</span>
+        <span class="stat-value" id="stat-total">0</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">EXISTING</span>
+        <span class="stat-value text-orange" id="stat-existing">0</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">PROGRESS / UPCOMING</span>
+        <span class="stat-value text-blue" id="stat-progress">0</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT CONTAINER -->
+  <div class="main-layout">
+
+    <!-- SIDEBAR LEFT: FILTER & LIST TOKO -->
+    <aside class="sidebar">
+      <div class="filter-section">
+        <input type="text" id="search-input" placeholder="🔍 Cari toko, partner, kota..." class="search-box">
+        
+        <div class="filter-grid">
+          <select id="filter-partner"><option value="">Semua Partner</option></select>
+          <select id="filter-region"><option value="">Semua Region</option></select>
+          
+          <div class="filter-row">
+            <select id="filter-province"><option value="">Semua Provinsi</option></select>
+            <select id="filter-city"><option value="">Semua Kota</option></select>
+          </div>
+
+          <div class="filter-row">
+            <select id="filter-type"><option value="">Semua Tipe</option></select>
+            <select id="filter-status"><option value="">Semua Status</option></select>
+          </div>
+        </div>
+      </div>
+
+      <div class="store-count-info">
+        <span id="stores-found-text">0 toko ditemukan</span>
+        <button id="reset-btn" onclick="resetFilters()">Reset Filter</button>
+      </div>
+
+      <!-- DAFTAR KARTU TOKO -->
+      <div class="store-list" id="store-list">
+        <!-- Rendered via JS -->
+      </div>
+    </aside>
+
+    <!-- MAP CONTAINER CENTER -->
+    <main class="map-container">
+      <div id="map"></div>
+    </main>
+
+  </div>
+
+  <!-- Leaflet JS & Script -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
