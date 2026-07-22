@@ -3,63 +3,85 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Xiaomi Store Locator</title>
+  <title>IDN - Xiaomi Authorized Store Locator</title>
   
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <!-- MarkerCluster CSS -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
-  
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <div class="app-container">
-    <!-- Sidebar Left -->
+  <!-- HEADER / NAVBAR TOP -->
+  <header class="navbar">
+    <div class="brand">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/2/29/Xiaomi_logo.svg" alt="Xiaomi Logo" class="logo">
+      <div>
+        <h1>IDN - Xiaomi Authorized Store Locator</h1>
+        <p>Location intelligence & store coverage mapping</p>
+      </div>
+    </div>
+
+    <!-- STATS COUNTER -->
+    <div class="stats-container">
+      <div class="stat-card">
+        <span class="stat-label">TOTAL STORES</span>
+        <span class="stat-value" id="stat-total">0</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">EXISTING</span>
+        <span class="stat-value text-orange" id="stat-existing">0</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">PROGRESS / UPCOMING</span>
+        <span class="stat-value text-blue" id="stat-progress">0</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT CONTAINER -->
+  <div class="main-layout">
+
+    <!-- SIDEBAR LEFT: FILTER & LIST TOKO -->
     <aside class="sidebar">
-      <div class="sidebar-header">
-        <h2>Xiaomi Store Locator</h2>
-      </div>
-
-      <div class="search-box">
-        <input type="text" id="search-input" placeholder="🔍 Cari toko, partner, kota...">
-      </div>
-
-      <div class="filter-grid">
-        <select id="filter-partner"><option value="">Partner</option></select>
-        <select id="filter-region"><option value="">Region</option></select>
+      <div class="filter-section">
+        <input type="text" id="search-input" placeholder="🔍 Cari toko, partner, kota..." class="search-box">
         
-        <div class="filter-row">
-          <select id="filter-province"><option value="">Province</option></select>
-          <select id="filter-city"><option value="">City</option></select>
-        </div>
+        <div class="filter-grid">
+          <select id="filter-partner"><option value="">Partner</option></select>
+          <select id="filter-region"><option value="">Region</option></select>
+          
+          <div class="filter-row">
+            <select id="filter-province"><option value="">Province</option></select>
+            <select id="filter-city"><option value="">City</option></select>
+          </div>
 
-        <div class="filter-row">
-          <select id="filter-type"><option value="">Type</option></select>
-          <select id="filter-status"><option value="">Status</option></select>
+          <div class="filter-row">
+            <select id="filter-type"><option value="">Type</option></select>
+            <select id="filter-status"><option value="">Status</option></select>
+          </div>
         </div>
       </div>
 
-      <div class="stats-bar">
-        <span id="store-count">0 toko ditemukan</span>
-        <button id="reset-btn" class="reset-link">Reset Filter</button>
+      <div class="store-count-info">
+        <span id="stores-found-text">0 toko ditemukan</span>
+        <button id="reset-btn" onclick="resetFilters()">Reset Filter</button>
       </div>
 
-      <div id="store-list" class="store-list">
-        <!-- List toko akan terisi otomatis -->
+      <!-- DAFTAR KARTU TOKO -->
+      <div class="store-list" id="store-list">
+        <!-- Rendered via JS -->
       </div>
     </aside>
 
-    <!-- Map View -->
-    <main id="map"></main>
+    <!-- MAP CONTAINER CENTER -->
+    <main class="map-container">
+      <div id="map"></div>
+    </main>
+
   </div>
 
-  <!-- Leaflet JS -->
+  <!-- Leaflet JS & Script -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <!-- MarkerCluster JS -->
-  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
-  
   <script src="script.js"></script>
 </body>
 </html>
