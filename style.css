@@ -333,3 +333,47 @@ body {
   font-size: 11px;
   color: #94a3b8;
 }
+
+/* ==========================================
+   MAPS LINK & EXTRA INFO (POPULATION & TRAFFIC)
+   ========================================== */
+.maps-link-container {
+  text-align: left;
+  margin: 6px 0;
+}
+
+.btn-maps-link {
+  display: inline-block;
+  color: #ea580c;
+  font-weight: 600;
+  font-size: 11px;
+  text-decoration: none;
+  padding: 3px 8px;
+  border: 1px solid #ea580c;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  background-color: #fff;
+}
+
+.btn-maps-link:hover {
+  background-color: #ea580c;
+  color: #ffffff;
+}
+
+.store-extra-info {
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px dashed #e2e8f0;
+  font-size: 11px;
+  color: #475569;
+}
+
+.store-extra-info .info-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 2px;
+}
+
+.store-extra-info .info-row strong {
+  color: #0f172a;
+}

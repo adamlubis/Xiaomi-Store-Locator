@@ -23,9 +23,8 @@ const selectedFilters = {
 };
 
 // ==========================================
-// 2. ICONS MARKER NATURAL & BERBEDA WARNA
+// 2. HELPER FUNCTIONS & ICONS
 // ==========================================
-// EXISTING: Orange Tua
 const orangeIcon = L.divIcon({
   className: 'custom-icon',
   html: `<div style="background-color: #EA580C; width: 14px; height: 14px; border-radius: 50%; border: 2px solid #FFFFFF; box-shadow: 0 1px 3px rgba(0,0,0,0.3);"></div>`,
@@ -33,7 +32,6 @@ const orangeIcon = L.divIcon({
   iconAnchor: [7, 7]
 });
 
-// PROGRESS: Biru Modern
 const blueIcon = L.divIcon({
   className: 'custom-icon',
   html: `<div style="background-color: #2563EB; width: 14px; height: 14px; border-radius: 50%; border: 2px solid #FFFFFF; box-shadow: 0 1px 3px rgba(0,0,0,0.3);"></div>`,
@@ -41,7 +39,6 @@ const blueIcon = L.divIcon({
   iconAnchor: [7, 7]
 });
 
-// NO STORE: Hijau Natural (Emerald)
 const greenIcon = L.divIcon({
   className: 'custom-icon',
   html: `<div style="background-color: #059669; width: 14px; height: 14px; border-radius: 50%; border: 2px solid #FFFFFF; box-shadow: 0 1px 3px rgba(0,0,0,0.3);"></div>`,
@@ -51,12 +48,28 @@ const greenIcon = L.divIcon({
 
 function parseNum(val) {
   if (typeof val === 'number') return val;
-  if (typeof val === 'string') return parseFloat(val.replace(',', '.').trim());
+  if (typeof val === 'string') {
+    const cleaned = val.replace(',', '.').trim();
+    const num = parseFloat(cleaned);
+    return isNaN(num) ? NaN : num;
+  }
   return NaN;
 }
 
+function getTextVal(val) {
+  if (val === undefined || val === null || val === '') return '-';
+  return String(val).trim();
+}
+
+function formatPopulation(val) {
+  if (val === undefined || val === null || val === '' || val === '-') return '-';
+  const cleaned = String(val).replace(/[^0-9]/g, '');
+  if (!cleaned) return String(val);
+  return Number(cleaned).toLocaleString('en-US');
+}
+
 function getGradeVal(store) {
-  return store["Mall Grade"] || store["Mall_Grade"] || store["Grade Mall"] || store["Grade"] || store["GRADE"] || '';
+  return store["Grade"] || store["Mall Grade"] || store["Mall_Grade"] || store["Grade Mall"] || store["GRADE"] || store["Store Grade"] || '';
 }
 
 async function fetchJsonData(fileName) {
@@ -88,7 +101,7 @@ async function loadStoresData() {
   const candidatesData = await fetchJsonData('mall_candidate.json');
 
   const formattedStores = storesData.map(s => {
-    let st = String(s.Status || '').trim().toUpperCase();
+    let st = String(s.Status || 'EXISTING').trim().toUpperCase();
     if (st.includes('EXIST')) st = 'EXISTING';
     else if (st.includes('PROGRESS') || st.includes('UPCOMING')) st = 'PROGRESS';
     else st = 'EXISTING';
@@ -102,10 +115,8 @@ async function loadStoresData() {
   allStores = [...formattedStores, ...formattedCandidates];
   filteredStores = [...allStores];
 
-  if (allStores.length > 0) {
-    setupMultiSelects();
-    updateDashboard();
-  }
+  setupMultiSelects();
+  updateDashboard();
 }
 
 loadStoresData();
@@ -252,7 +263,6 @@ function updateDashboard() {
   const progress = filteredStores.filter(s => String(s["Status"]).toUpperCase() === 'PROGRESS').length;
   const noStore = filteredStores.filter(s => String(s["Status"]).toUpperCase() === 'NO STORE').length;
 
-  // HANYA MENGHITUNG EXISTING + PROGRESS
   const totalStoresOnly = existing + progress;
 
   const statTotal = document.getElementById('stat-total');
@@ -265,14 +275,14 @@ function updateDashboard() {
   if (statExisting) statExisting.textContent = existing;
   if (statProgress) statProgress.textContent = progress;
   if (statNoStore) statNoStore.textContent = noStore;
-  if (storesFound) storesFound.textContent = `${totalStoresOnly} lokasi toko ditemukan`;
+  if (storesFound) storesFound.textContent = `${filteredStores.length} lokasi ditemukan`;
 
   renderStoreList();
   renderMarkers();
 }
 
 // ==========================================
-// 7. RENDER STORE LIST CARDS
+// 7. RENDER STORE LIST CARDS (SISI KIRI - CITY POPULATION)
 // ==========================================
 function renderStoreList() {
   const listContainer = document.getElementById('store-list');
@@ -290,6 +300,14 @@ function renderStoreList() {
     const gradeBadgeHtml = storeGrade ? `<span class="badge badge-grade" style="background:#e0e7ff; color:#3730a3; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:600; margin-right:4px;">${storeGrade}</span>` : '';
     const name = store["Store Name"] || store["Mall Name"] || store["Name"] || 'Xiaomi Store / Mall';
 
+    const mapsLink = getTextVal(store['Google Maps Link'] || store['Popul Link'] || store['Maps Link']);
+    const rawPop = store['POPULATION'] || store['Population'] || store['City Population'];
+    const populationFormatted = formatPopulation(rawPop);
+
+    const mapsBtnHtml = (mapsLink && mapsLink !== '-') 
+      ? `<div class="maps-link-container"><a href="${mapsLink}" target="_blank" rel="noopener noreferrer" class="btn-maps-link">📍 Maps Link</a></div>` 
+      : '';
+
     const card = document.createElement('div');
     card.className = 'store-card';
     card.innerHTML = `
@@ -300,11 +318,22 @@ function renderStoreList() {
           <span class="badge ${badgeClass}">${status}</span>
         </div>
       </div>
+      
+      ${mapsBtnHtml}
+
       <div class="card-partner">🏢 ${store["Partner"] || '-'}</div>
       <div class="card-address">📍 ${store["City"] || ''}, ${store["Province"] || ''}</div>
+
+      <div class="store-extra-info" style="margin-top: 8px; border-top: 1px dashed #e2e8f0; padding-top: 6px; font-size: 11px;">
+        <div>
+          <span style="color: #64748b; display: block;">City Population:</span> 
+          <strong style="color: #1e293b; font-size: 12px;">${populationFormatted}</strong>
+        </div>
+      </div>
     `;
 
-    card.addEventListener('click', () => {
+    card.addEventListener('click', (e) => {
+      if (e.target.tagName === 'A') return;
       const lat = parseNum(store["Latitude"]);
       const lng = parseNum(store["Longitude"]);
       if (!isNaN(lat) && !isNaN(lng)) {
@@ -318,7 +347,7 @@ function renderStoreList() {
 }
 
 // ==========================================
-// 8. RENDER MARKERS (WARNA NATURAL CLEAR)
+// 8. RENDER MARKERS (POPUP PETA - CITY POPULATION & TRAFFIC)
 // ==========================================
 function renderMarkers() {
   markersLayer.clearLayers();
@@ -331,9 +360,9 @@ function renderMarkers() {
 
     const status = store["Status"];
 
-    let icon = greenIcon; // NO STORE = Hijau Emerald Natural
-    if (status === 'EXISTING') icon = orangeIcon; // EXISTING = Orange Tua Natural
-    else if (status === 'PROGRESS') icon = blueIcon; // PROGRESS = Biru Natural
+    let icon = greenIcon;
+    if (status === 'EXISTING') icon = orangeIcon;
+    else if (status === 'PROGRESS') icon = blueIcon;
 
     const storeGrade = getGradeVal(store);
     const name = store["Store Name"] || store["Mall Name"] || store["Name"] || 'Xiaomi Store / Mall';
@@ -342,16 +371,33 @@ function renderMarkers() {
     const rawCost = parseNum(store["Rental Cost"]);
     const rentalCost = !isNaN(rawCost) ? `Rp ${new Intl.NumberFormat('id-ID').format(rawCost)}` : '-';
 
+    const mapsLink = getTextVal(store['Google Maps Link'] || store['Popul Link'] || store['Maps Link']);
+    const rawPop = store['POPULATION'] || store['Population'] || store['City Population'];
+    const populationFormatted = formatPopulation(rawPop);
+    
+    const dailyTraffic = getTextVal(store['Daily Traffic (Est)'] || store['Daily Traffic'] || store['Traffic']);
+    const monthlyTraffic = getTextVal(store['Monthly Traffic (Est)'] || store['Monthly Traffic']);
+
+    const mapsBtnHtml = (mapsLink && mapsLink !== '-') 
+      ? `<div class="maps-link-container" style="margin-top:4px;"><a href="${mapsLink}" target="_blank" rel="noopener noreferrer" class="btn-maps-link">📍 Maps Link</a></div>` 
+      : '';
+
     const popupContent = `
       <div style="font-weight:bold; font-size:13px; margin-bottom:4px;">${name}</div>
-      <div style="font-size:11px; color:#666; margin-bottom:8px;">${store["Address"] || ''}</div>
-      <div style="font-size:11px; line-height:1.5;">
+      <div style="font-size:11px; color:#666; margin-bottom:6px;">${store["Address"] || ''}</div>
+      
+      ${mapsBtnHtml}
+
+      <div style="font-size:11px; line-height:1.5; margin-top:6px; border-top:1px dashed #e2e8f0; padding-top:6px;">
         <b>Partner:</b> ${store["Partner"] || '-'}<br>
         <b>Region:</b> ${store["Region"] || '-'}<br>
         <b>Mall Grade:</b> ${storeGrade || '-'}<br>
         <b>Status:</b> ${status}<br>
         <b>Size:</b> ${store["Store Size"] || '-'} sqm<br>
-        <b>Rental:</b> ${rentalCost}
+        <b>Rental:</b> ${rentalCost}<br>
+        <b>City Population:</b> ${populationFormatted}<br>
+        <b>Daily Traffic (Est):</b> ${dailyTraffic}<br>
+        <b>Monthly Traffic (Est):</b> ${monthlyTraffic}
       </div>
     `;
 
