@@ -1,4 +1,6 @@
-// Inisialisasi Peta
+// ==========================================
+// 1. INISIALISASI PETA LEAFLET
+// ==========================================
 const map = L.map('map').setView([-2.548926, 118.014863], 5);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -10,17 +12,39 @@ let filteredStores = [];
 let markersLayer = L.layerGroup().addTo(map);
 let radiusCirclesGroup = L.layerGroup().addTo(map);
 
-// Marker Icons
+const selectedFilters = {
+  partner: [],
+  region: [],
+  province: [],
+  city: [],
+  type: [],
+  grade: [],
+  status: []
+};
+
+// ==========================================
+// 2. ICONS MARKER NATURAL & BERBEDA WARNA
+// ==========================================
+// EXISTING: Orange Tua
 const orangeIcon = L.divIcon({
   className: 'custom-icon',
-  html: `<div style="background-color: #ff6b00; width: 14px; height: 14px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 6px rgba(0,0,0,0.3);"></div>`,
+  html: `<div style="background-color: #EA580C; width: 14px; height: 14px; border-radius: 50%; border: 2px solid #FFFFFF; box-shadow: 0 1px 3px rgba(0,0,0,0.3);"></div>`,
   iconSize: [14, 14],
   iconAnchor: [7, 7]
 });
 
+// PROGRESS: Biru Modern
 const blueIcon = L.divIcon({
   className: 'custom-icon',
-  html: `<div style="background-color: #0078ff; width: 14px; height: 14px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 6px rgba(0,0,0,0.3);"></div>`,
+  html: `<div style="background-color: #2563EB; width: 14px; height: 14px; border-radius: 50%; border: 2px solid #FFFFFF; box-shadow: 0 1px 3px rgba(0,0,0,0.3);"></div>`,
+  iconSize: [14, 14],
+  iconAnchor: [7, 7]
+});
+
+// NO STORE: Hijau Natural (Emerald)
+const greenIcon = L.divIcon({
+  className: 'custom-icon',
+  html: `<div style="background-color: #059669; width: 14px; height: 14px; border-radius: 50%; border: 2px solid #FFFFFF; box-shadow: 0 1px 3px rgba(0,0,0,0.3);"></div>`,
   iconSize: [14, 14],
   iconAnchor: [7, 7]
 });
@@ -31,133 +55,250 @@ function parseNum(val) {
   return NaN;
 }
 
-// Load Data
-async function loadStoresData() {
+function getGradeVal(store) {
+  return store["Mall Grade"] || store["Mall_Grade"] || store["Grade Mall"] || store["Grade"] || store["GRADE"] || '';
+}
+
+async function fetchJsonData(fileName) {
   const paths = [
-    './output/stores.json',
-    'output/stores.json',
-    '../output/stores.json',
-    'stores.json'
+    `../output/${fileName}`,
+    `output/${fileName}`,
+    `./output/${fileName}`,
+    `./${fileName}`,
+    fileName
   ];
-  let data = null;
 
   for (const path of paths) {
     try {
       const res = await fetch(path);
       if (res.ok) {
-        data = await res.json();
-        break;
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) return data;
       }
     } catch (e) {}
   }
+  return [];
+}
 
-  if (data && Array.isArray(data)) {
-    allStores = data;
-    filteredStores = [...allStores];
-    populateFilters();
+// ==========================================
+// 3. LOAD DATA
+// ==========================================
+async function loadStoresData() {
+  const storesData = await fetchJsonData('stores.json');
+  const candidatesData = await fetchJsonData('mall_candidate.json');
+
+  const formattedStores = storesData.map(s => {
+    let st = String(s.Status || '').trim().toUpperCase();
+    if (st.includes('EXIST')) st = 'EXISTING';
+    else if (st.includes('PROGRESS') || st.includes('UPCOMING')) st = 'PROGRESS';
+    else st = 'EXISTING';
+    return { ...s, Status: st };
+  });
+
+  const formattedCandidates = candidatesData.map(c => {
+    return { ...c, Status: 'NO STORE', isCandidate: true };
+  });
+
+  allStores = [...formattedStores, ...formattedCandidates];
+  filteredStores = [...allStores];
+
+  if (allStores.length > 0) {
+    setupMultiSelects();
     updateDashboard();
-  } else {
-    alert("Gagal membaca stores.json. Pastikan file JSON ada di folder output.");
   }
 }
 
 loadStoresData();
 
-// Populate Select Filters (Tanpa kata "Semua")
-function populateFilters() {
-  const filterKeys = [
-    { id: 'filter-partner', key: 'Partner' },
-    { id: 'filter-region', key: 'Region' },
-    { id: 'filter-province', key: 'Province' },
-    { id: 'filter-city', key: 'City' },
-    { id: 'filter-type', key: 'Type' },
-    { id: 'filter-status', key: 'Status' }
-  ];
+// ==========================================
+// 4. MULTI-SELECT DROPDOWN LOGIC
+// ==========================================
+const filterConfigs = [
+  { id: 'ms-partner', key: 'partner', field: 'Partner', label: 'Partner' },
+  { id: 'ms-region', key: 'region', field: 'Region', label: 'Region' },
+  { id: 'ms-province', key: 'province', field: 'Province', label: 'Province' },
+  { id: 'ms-city', key: 'city', field: 'City', label: 'City' },
+  { id: 'ms-type', key: 'type', field: 'Type', label: 'Type' },
+  { id: 'ms-grade', key: 'grade', customGetter: getGradeVal, label: 'Mall Grade' },
+  { id: 'ms-status', key: 'status', customOptions: ['EXISTING', 'PROGRESS', 'NO STORE'], label: 'Status' }
+];
 
-  filterKeys.forEach(f => {
-    const select = document.getElementById(f.id);
-    const unique = [...new Set(allStores.map(item => item[f.key]).filter(Boolean))].sort();
+function setupMultiSelects() {
+  filterConfigs.forEach(cfg => {
+    const container = document.getElementById(cfg.id);
+    if (!container) return;
 
-    select.innerHTML = `<option value="">${f.key}</option>`;
-    unique.forEach(val => {
-      const opt = document.createElement('option');
-      opt.value = val;
-      opt.textContent = val;
-      select.appendChild(opt);
+    const btn = container.querySelector('.multiselect-btn');
+    const dropdown = container.querySelector('.multiselect-dropdown');
+
+    let options = [];
+    if (cfg.customOptions) {
+      options = cfg.customOptions;
+    } else {
+      options = [...new Set(allStores.map(item => {
+        return cfg.customGetter ? cfg.customGetter(item) : item[cfg.field];
+      }).filter(Boolean))].sort();
+    }
+
+    dropdown.innerHTML = '';
+    options.forEach(optVal => {
+      const label = document.createElement('label');
+      label.className = 'multiselect-option';
+      label.innerHTML = `
+        <input type="checkbox" value="${optVal}">
+        <span>${optVal}</span>
+      `;
+
+      const checkbox = label.querySelector('input');
+      checkbox.addEventListener('change', () => {
+        if (checkbox.checked) {
+          selectedFilters[cfg.key].push(optVal);
+        } else {
+          selectedFilters[cfg.key] = selectedFilters[cfg.key].filter(v => v !== optVal);
+        }
+        updateBtnLabel(btn, cfg.label, selectedFilters[cfg.key]);
+        applyFilters();
+      });
+
+      dropdown.appendChild(label);
     });
 
-    select.addEventListener('change', applyFilters);
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      document.querySelectorAll('.multiselect-dropdown').forEach(d => {
+        if (d !== dropdown) d.classList.remove('show');
+      });
+      dropdown.classList.toggle('show');
+    });
   });
 
-  document.getElementById('search-input').addEventListener('input', applyFilters);
+  document.addEventListener('click', () => {
+    document.querySelectorAll('.multiselect-dropdown').forEach(d => d.classList.remove('show'));
+  });
+
+  const searchInput = document.getElementById('search-input');
+  if (searchInput) searchInput.addEventListener('input', applyFilters);
+
+  const resetBtn = document.getElementById('reset-btn');
+  if (resetBtn) resetBtn.addEventListener('click', resetFilters);
 }
 
-// Filter Logic
+function updateBtnLabel(btn, defaultLabel, selectedArray) {
+  const span = btn.querySelector('span');
+  if (selectedArray.length === 0) {
+    span.textContent = defaultLabel;
+  } else if (selectedArray.length === 1) {
+    span.textContent = selectedArray[0];
+  } else {
+    span.textContent = `${defaultLabel} (${selectedArray.length})`;
+  }
+}
+
+// ==========================================
+// 5. FILTER LOGIC
+// ==========================================
 function applyFilters() {
-  const searchVal = document.getElementById('search-input').value.toLowerCase();
-  const partnerVal = document.getElementById('filter-partner').value;
-  const regionVal = document.getElementById('filter-region').value;
-  const provinceVal = document.getElementById('filter-province').value;
-  const cityVal = document.getElementById('filter-city').value;
-  const typeVal = document.getElementById('filter-type').value;
-  const statusVal = document.getElementById('filter-status').value;
+  const searchInput = document.getElementById('search-input');
+  const searchVal = searchInput ? searchInput.value.toLowerCase() : '';
 
   filteredStores = allStores.filter(store => {
-    const matchSearch = !searchVal || 
-      (store["Store Name"] || '').toLowerCase().includes(searchVal) ||
-      (store["Partner"] || '').toLowerCase().includes(searchVal) ||
-      (store["City"] || '').toLowerCase().includes(searchVal);
+    const storeName = store["Store Name"] || store["Mall Name"] || store["Name"] || '';
+    const storeGrade = getGradeVal(store);
+    const storeStatus = store["Status"] || 'NO STORE';
 
-    return matchSearch &&
-           (partnerVal === '' || store["Partner"] === partnerVal) &&
-           (regionVal === '' || store["Region"] === regionVal) &&
-           (provinceVal === '' || store["Province"] === provinceVal) &&
-           (cityVal === '' || store["City"] === cityVal) &&
-           (typeVal === '' || store["Type"] === typeVal) &&
-           (statusVal === '' || store["Status"] === statusVal);
+    const matchSearch = !searchVal || 
+      storeName.toLowerCase().includes(searchVal) ||
+      (store["Partner"] || '').toLowerCase().includes(searchVal) ||
+      (store["City"] || '').toLowerCase().includes(searchVal) ||
+      storeGrade.toLowerCase().includes(searchVal);
+
+    const matchPartner = selectedFilters.partner.length === 0 || selectedFilters.partner.includes(store["Partner"]);
+    const matchRegion = selectedFilters.region.length === 0 || selectedFilters.region.includes(store["Region"]);
+    const matchProvince = selectedFilters.province.length === 0 || selectedFilters.province.includes(store["Province"]);
+    const matchCity = selectedFilters.city.length === 0 || selectedFilters.city.includes(store["City"]);
+    const matchType = selectedFilters.type.length === 0 || selectedFilters.type.includes(store["Type"]);
+    const matchGrade = selectedFilters.grade.length === 0 || selectedFilters.grade.includes(storeGrade);
+    const matchStatus = selectedFilters.status.length === 0 || selectedFilters.status.includes(storeStatus);
+
+    return matchSearch && matchPartner && matchRegion && matchProvince && matchCity && matchType && matchGrade && matchStatus;
   });
 
   updateDashboard();
 }
 
 function resetFilters() {
-  document.getElementById('search-input').value = '';
-  ['filter-partner', 'filter-region', 'filter-province', 'filter-city', 'filter-type', 'filter-status'].forEach(id => {
-    document.getElementById(id).value = '';
+  const searchInput = document.getElementById('search-input');
+  if (searchInput) searchInput.value = '';
+
+  filterConfigs.forEach(cfg => {
+    selectedFilters[cfg.key] = [];
+    const container = document.getElementById(cfg.id);
+    if (container) {
+      const btn = container.querySelector('.multiselect-btn');
+      updateBtnLabel(btn, cfg.label, []);
+      const checkboxes = container.querySelectorAll('input[type="checkbox"]');
+      checkboxes.forEach(cb => cb.checked = false);
+    }
   });
+
   applyFilters();
 }
 
-// Update UI (KPI, List, Markers)
+// ==========================================
+// 6. UPDATE DASHBOARD & COUNTERS
+// ==========================================
 function updateDashboard() {
-  const total = filteredStores.length;
-  const existing = filteredStores.filter(s => (s["Status"]||'').toLowerCase() === 'existing').length;
-  const progress = filteredStores.filter(s => (s["Status"]||'').toLowerCase() === 'progress').length;
+  const existing = filteredStores.filter(s => String(s["Status"]).toUpperCase() === 'EXISTING').length;
+  const progress = filteredStores.filter(s => String(s["Status"]).toUpperCase() === 'PROGRESS').length;
+  const noStore = filteredStores.filter(s => String(s["Status"]).toUpperCase() === 'NO STORE').length;
 
-  document.getElementById('stat-total').textContent = total;
-  document.getElementById('stat-existing').textContent = existing;
-  document.getElementById('stat-progress').textContent = progress;
-  document.getElementById('stores-found-text').textContent = `${total} toko ditemukan`;
+  // HANYA MENGHITUNG EXISTING + PROGRESS
+  const totalStoresOnly = existing + progress;
+
+  const statTotal = document.getElementById('stat-total');
+  const statExisting = document.getElementById('stat-existing');
+  const statProgress = document.getElementById('stat-progress');
+  const statNoStore = document.getElementById('stat-nostore');
+  const storesFound = document.getElementById('stores-found-text');
+
+  if (statTotal) statTotal.textContent = totalStoresOnly;
+  if (statExisting) statExisting.textContent = existing;
+  if (statProgress) statProgress.textContent = progress;
+  if (statNoStore) statNoStore.textContent = noStore;
+  if (storesFound) storesFound.textContent = `${totalStoresOnly} lokasi toko ditemukan`;
 
   renderStoreList();
   renderMarkers();
 }
 
-// Render Sidebar Cards
+// ==========================================
+// 7. RENDER STORE LIST CARDS
+// ==========================================
 function renderStoreList() {
   const listContainer = document.getElementById('store-list');
+  if (!listContainer) return;
   listContainer.innerHTML = '';
 
   filteredStores.forEach(store => {
-    const isExisting = (store["Status"] || '').toLowerCase() === 'existing';
-    const badgeClass = isExisting ? 'badge-existing' : 'badge-progress';
-    
+    const status = store["Status"] || 'NO STORE';
+
+    let badgeClass = 'badge-progress';
+    if (status === 'EXISTING') badgeClass = 'badge-existing';
+    if (status === 'NO STORE') badgeClass = 'badge-nostore';
+
+    const storeGrade = getGradeVal(store);
+    const gradeBadgeHtml = storeGrade ? `<span class="badge badge-grade" style="background:#e0e7ff; color:#3730a3; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:600; margin-right:4px;">${storeGrade}</span>` : '';
+    const name = store["Store Name"] || store["Mall Name"] || store["Name"] || 'Xiaomi Store / Mall';
+
     const card = document.createElement('div');
     card.className = 'store-card';
     card.innerHTML = `
       <div class="card-header">
-        <div class="card-title">${store["Store Name"] || 'Xiaomi Store'}</div>
-        <span class="badge ${badgeClass}">${store["Status"] || 'N/A'}</span>
+        <div class="card-title">${name}</div>
+        <div class="badge-group">
+          ${gradeBadgeHtml}
+          <span class="badge ${badgeClass}">${status}</span>
+        </div>
       </div>
       <div class="card-partner">🏢 ${store["Partner"] || '-'}</div>
       <div class="card-address">📍 ${store["City"] || ''}, ${store["Province"] || ''}</div>
@@ -176,7 +317,9 @@ function renderStoreList() {
   });
 }
 
-// Render Markers & Popup
+// ==========================================
+// 8. RENDER MARKERS (WARNA NATURAL CLEAR)
+// ==========================================
 function renderMarkers() {
   markersLayer.clearLayers();
 
@@ -186,51 +329,55 @@ function renderMarkers() {
 
     if (isNaN(lat) || isNaN(lng)) return;
 
-    const status = (store["Status"] || '').toLowerCase();
-    const icon = status === 'existing' ? orangeIcon : blueIcon;
+    const status = store["Status"];
 
+    let icon = greenIcon; // NO STORE = Hijau Emerald Natural
+    if (status === 'EXISTING') icon = orangeIcon; // EXISTING = Orange Tua Natural
+    else if (status === 'PROGRESS') icon = blueIcon; // PROGRESS = Biru Natural
+
+    const storeGrade = getGradeVal(store);
+    const name = store["Store Name"] || store["Mall Name"] || store["Name"] || 'Xiaomi Store / Mall';
     const marker = L.marker([lat, lng], { icon: icon });
 
     const rawCost = parseNum(store["Rental Cost"]);
     const rentalCost = !isNaN(rawCost) ? `Rp ${new Intl.NumberFormat('id-ID').format(rawCost)}` : '-';
 
     const popupContent = `
-      <div style="font-weight:bold; font-size:13px; margin-bottom:4px;">${store["Store Name"]}</div>
+      <div style="font-weight:bold; font-size:13px; margin-bottom:4px;">${name}</div>
       <div style="font-size:11px; color:#666; margin-bottom:8px;">${store["Address"] || ''}</div>
       <div style="font-size:11px; line-height:1.5;">
         <b>Partner:</b> ${store["Partner"] || '-'}<br>
         <b>Region:</b> ${store["Region"] || '-'}<br>
-        <b>Status:</b> ${store["Status"] || '-'}<br>
+        <b>Mall Grade:</b> ${storeGrade || '-'}<br>
+        <b>Status:</b> ${status}<br>
         <b>Size:</b> ${store["Store Size"] || '-'} sqm<br>
         <b>Rental:</b> ${rentalCost}
       </div>
     `;
 
     marker.bindPopup(popupContent);
-
-    marker.on('click', () => {
-      drawRadiusCircles(lat, lng);
-    });
-
+    marker.on('click', () => drawRadiusCircles(lat, lng));
     markersLayer.addLayer(marker);
   });
 }
 
-// Draw Radius Circles (2 KM & 5 KM)
+// ==========================================
+// 9. DRAW RADIUS CIRCLES
+// ==========================================
 function drawRadiusCircles(lat, lng) {
   radiusCirclesGroup.clearLayers();
 
   const circle2k = L.circle([lat, lng], {
-    color: '#ff6b00',
-    fillColor: '#ff6b00',
+    color: '#EA580C',
+    fillColor: '#EA580C',
     fillOpacity: 0.1,
     radius: 2000,
     dashArray: '4, 4'
   });
 
   const circle5k = L.circle([lat, lng], {
-    color: '#0078ff',
-    fillColor: '#0078ff',
+    color: '#2563EB',
+    fillColor: '#2563EB',
     fillOpacity: 0.05,
     radius: 5000,
     dashArray: '6, 6'
