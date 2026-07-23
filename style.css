@@ -1,91 +1,41 @@
 /* ==========================================
-   GLOBAL STYLES & FONT (APTOS)
+   XIAOMI BRAND LOGO HEADER STYLING
    ========================================== */
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  font-family: 'Aptos', 'Aptos Display', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-}
-
-body {
-  background-color: #f8fafc;
-  color: #1e293b;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-/* ==========================================
-   NAVBAR HEADER
-   ========================================== */
-.navbar {
-  background-color: #ffffff;
-  border-bottom: 1px solid #e2e8f0;
-  padding: 12px 24px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  z-index: 1000;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
-.brand {
+.brand-container {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.brand h1 {
-  font-size: 18px;
+.xiaomi-logo-wrapper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  background-color: #ff6700;
+  border-radius: 12px;
+  box-shadow: 0 3px 8px rgba(255, 103, 0, 0.3);
+  flex-shrink: 0;
+}
+
+.xiaomi-logo-wrapper svg {
+  width: 26px;
+  height: 26px;
+  fill: #ffffff;
+}
+
+.brand-title h1 {
+  font-size: 16px;
   font-weight: 700;
   color: #0f172a;
-  letter-spacing: -0.3px;
+  line-height: 1.2;
 }
 
-.brand p {
-  font-size: 12px;
-  color: #64748b;
-  margin-top: 2px;
-}
-
-/* ==========================================
-   STATS COUNTER CARDS
-   ========================================== */
-.stats-container {
-  display: flex;
-  gap: 12px;
-}
-
-.stat-card {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 8px 16px;
-  text-align: center;
-  min-width: 100px;
-}
-
-.stat-label {
-  display: block;
+.brand-title p {
   font-size: 11px;
-  font-weight: 700;
   color: #64748b;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  margin-bottom: 2px;
 }
-
-.stat-value {
-  font-size: 22px;
-  font-weight: 800;
-  color: #0f172a;
-}
-
-.text-orange { color: #ea580c; }
-.text-blue { color: #2563eb; }
-.text-green { color: #059669; }
 
 /* ==========================================
    MAIN LAYOUT (SIDEBAR & MAP)
@@ -235,13 +185,13 @@ body {
   align-items: center;
   font-size: 12px;
   font-weight: 600;
-  color: #475569;
+  color: #ea580c;
 }
 
 #reset-btn {
   background: none;
   border: none;
-  color: #2563eb;
+  color: #ea580c;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
@@ -250,7 +200,7 @@ body {
 }
 
 #reset-btn:hover {
-  background: #e0e7ff;
+  background: #ffedd5;
 }
 
 /* ==========================================
@@ -275,8 +225,8 @@ body {
 }
 
 .store-card:hover {
-  border-color: #2563eb;
-  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.08);
+  border-color: #ea580c;
+  box-shadow: 0 2px 8px rgba(234, 88, 12, 0.08);
   transform: translateY(-1px);
 }
 
@@ -297,6 +247,7 @@ body {
 .badge-group {
   display: flex;
   align-items: center;
+  gap: 4px;
 }
 
 .badge {
@@ -335,7 +286,7 @@ body {
 }
 
 /* ==========================================
-   MAPS LINK & EXTRA INFO (POPULATION & TRAFFIC)
+   MAPS LINK & EXTRA INFO
    ========================================== */
 .maps-link-container {
   text-align: left;
@@ -366,14 +317,4 @@ body {
   border-top: 1px dashed #e2e8f0;
   font-size: 11px;
   color: #475569;
-}
-
-.store-extra-info .info-row {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 2px;
-}
-
-.store-extra-info .info-row strong {
-  color: #0f172a;
 }

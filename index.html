@@ -3,122 +3,1208 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>IDN - Xiaomi Store Locator</title>
+  <title>Indonesia Xiaomi Store Locator - Interactive Distribution Map</title>
   
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <!-- Custom Style -->
-  <link rel="stylesheet" href="style.css">
+
+  <style>
+    @import url('https://fonts.cdnfonts.com/css/aptos');
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Aptos', 'Aptos Display', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+    }
+
+    body {
+      background-color: #f1f5f9;
+      color: #1e293b;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ================= NAVBAR ================= */
+    .navbar {
+      background-color: #ffffff;
+      border-bottom: 1px solid #e2e8f0;
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 1000;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-logo-xiaomi {
+      width: 42px;
+      height: 42px;
+      background-color: #ff6700;
+      border-radius: 12px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-shrink: 0;
+      box-shadow: 0 3px 8px rgba(255, 103, 0, 0.3);
+    }
+
+    .brand h1 {
+      font-size: 18px;
+      font-weight: 800;
+      color: #0f172a;
+      letter-spacing: -0.3px;
+    }
+
+    .brand p {
+      font-size: 11px;
+      color: #64748b;
+      margin-top: 1px;
+      font-weight: 500;
+    }
+
+    /* ================= STATS ================= */
+    .stats-container {
+      display: flex;
+      gap: 10px;
+    }
+
+    .stat-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 6px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-width: 130px;
+      gap: 10px;
+    }
+
+    .stat-content {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .stat-label {
+      font-size: 9.5px;
+      font-weight: 700;
+      color: #64748b;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+    }
+
+    .stat-content h2 {
+      font-size: 20px;
+      font-weight: 800;
+      line-height: 1.1;
+      margin: 1px 0;
+    }
+
+    .stat-sub {
+      font-size: 9.5px;
+      color: #94a3b8;
+      font-weight: 500;
+    }
+
+    .stat-orange h2 { color: #ea580c; }
+    .stat-blue h2   { color: #2563eb; }
+    .stat-purple h2 { color: #9333ea; }
+    .stat-green h2  { color: #059669; }
+
+    .stat-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .orange-icon { background-color: #fff7ed; color: #ea580c; }
+    .blue-icon   { background-color: #eff6ff; color: #2563eb; }
+    .purple-icon { background-color: #faf5ff; color: #9333ea; }
+    .green-icon  { background-color: #f0fdf4; color: #059669; }
+
+    /* ================= LAYOUT ================= */
+    .main-layout {
+      display: flex;
+      flex: 1;
+      height: calc(100vh - 61px);
+      position: relative;
+    }
+
+    /* ================= SIDEBAR ================= */
+    .sidebar {
+      width: 350px;
+      background: #ffffff;
+      border-right: 1px solid #e2e8f0;
+      display: flex;
+      flex-direction: column;
+      z-index: 500;
+      box-shadow: 4px 0 12px rgba(0, 0, 0, 0.02);
+    }
+
+    .filter-section {
+      padding: 12px 14px;
+      border-bottom: 1px solid #e2e8f0;
+      background: #ffffff;
+    }
+
+    .search-box-wrapper {
+      position: relative;
+      margin-bottom: 10px;
+    }
+
+    .search-box-icon {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #94a3b8;
+      font-size: 12px;
+    }
+
+    .search-box {
+      width: 100%;
+      padding: 8px 12px 8px 32px;
+      border: 1px solid #cbd5e1;
+      border-radius: 7px;
+      font-size: 12px;
+      outline: none;
+      background: #f8fafc;
+      color: #0f172a;
+      transition: all 0.2s ease;
+    }
+
+    .search-box:focus {
+      background: #ffffff;
+      border-color: #ea580c;
+      box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.1);
+    }
+
+    .filter-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .filter-row {
+      display: flex;
+      gap: 6px;
+    }
+
+    .custom-multiselect {
+      position: relative;
+      flex: 1;
+    }
+
+    .custom-multiselect.full-width {
+      width: 100%;
+    }
+
+    .multiselect-btn {
+      width: 100%;
+      padding: 7px 10px;
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 7px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #334155;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.2s;
+    }
+
+    .multiselect-btn:hover {
+      background: #ffffff;
+      border-color: #94a3b8;
+      color: #0f172a;
+    }
+
+    .multiselect-dropdown {
+      display: none;
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      right: 0;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 7px;
+      max-height: 200px;
+      overflow-y: auto;
+      z-index: 1000;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+      padding: 4px 0;
+    }
+
+    .multiselect-dropdown.show {
+      display: block;
+    }
+
+    .multiselect-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      font-size: 11px;
+      cursor: pointer;
+      color: #334155;
+      font-weight: 500;
+    }
+
+    .multiselect-option:hover {
+      background-color: #f1f5f9;
+      color: #0f172a;
+    }
+
+    .multiselect-option input[type="checkbox"] {
+      cursor: pointer;
+      accent-color: #ea580c;
+      width: 13px;
+      height: 13px;
+    }
+
+    .store-count-info {
+      padding: 8px 14px;
+      background: #f8fafc;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #475569;
+    }
+
+    #reset-btn {
+      background: #ffffff;
+      border: 1px solid #fecaca;
+      color: #dc2626;
+      font-size: 10.5px;
+      font-weight: 700;
+      cursor: pointer;
+      padding: 3px 8px;
+      border-radius: 5px;
+      transition: all 0.2s;
+    }
+
+    #reset-btn:hover {
+      background: #fee2e2;
+    }
+
+    .store-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: #f8fafc;
+    }
+
+    .store-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 11px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+    }
+
+    .store-card:hover {
+      border-color: #ea580c;
+      box-shadow: 0 4px 10px rgba(234, 88, 12, 0.06);
+      transform: translateY(-1px);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    .card-title {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: #0f172a;
+      line-height: 1.3;
+    }
+
+    .badge-group {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      flex-shrink: 0;
+    }
+
+    .badge {
+      padding: 2px 6px;
+      border-radius: 12px;
+      font-size: 9px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.2px;
+    }
+
+    .badge-existing { background-color: #ffedd5; color: #c2410c; }
+    .badge-progress { background-color: #dbeafe; color: #1e40af; }
+    .badge-nostore  { background-color: #d1fae5; color: #065f46; }
+
+    .card-meta-row {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      margin-top: 4px;
+    }
+
+    .card-partner {
+      font-size: 11px;
+      color: #475569;
+      font-weight: 600;
+    }
+
+    .card-address {
+      font-size: 10.5px;
+      color: #64748b;
+    }
+
+    .maps-link-container {
+      margin: 5px 0;
+    }
+
+    .btn-maps-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      color: #ea580c;
+      font-weight: 700;
+      font-size: 10.5px;
+      text-decoration: none;
+      padding: 2px 6px;
+      border: 1px solid #fed7aa;
+      border-radius: 5px;
+      background-color: #fff7ed;
+      transition: all 0.2s;
+    }
+
+    .btn-maps-link:hover {
+      background-color: #ea580c;
+      color: #ffffff;
+      border-color: #ea580c;
+    }
+
+    .store-extra-info {
+      margin-top: 6px;
+      padding-top: 5px;
+      border-top: 1px dashed #e2e8f0;
+      font-size: 10.5px;
+      color: #64748b;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* ================= MAP CONTAINER & LEGEND ================= */
+    .map-container {
+      flex: 1;
+      height: 100%;
+      position: relative;
+    }
+
+    #map {
+      width: 100%;
+      height: 100%;
+    }
+
+    .map-legend {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      background: white;
+      padding: 8px 12px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      display: flex;
+      gap: 12px;
+      z-index: 1000;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: #1e293b;
+      align-items: center;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    /* ================= RIGHT RADIUS PANEL ================= */
+    .right-info-panel {
+      position: absolute;
+      top: 60px;
+      right: 14px;
+      width: 330px;
+      max-height: calc(100% - 74px);
+      background: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.15);
+      border: 1px solid #cbd5e1;
+      z-index: 1000;
+      display: none; /* Default tersembunyi */
+      flex-direction: column;
+      overflow: hidden;
+      animation: slideInRight 0.2s ease-out;
+    }
+
+    @keyframes slideInRight {
+      from { opacity: 0; transform: translateX(20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .radius-header {
+      background: #0f766e;
+      color: #ffffff;
+      padding: 10px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .radius-title-box {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 800;
+      font-size: 13px;
+    }
+
+    .radius-count-badge {
+      background: #ffffff;
+      color: #0f766e;
+      font-weight: 800;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+
+    .radius-content {
+      padding: 12px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .center-store-title {
+      font-size: 12px;
+      line-height: 1.3;
+      color: #1e293b;
+    }
+
+    .center-store-title strong {
+      display: block;
+      font-size: 12.5px;
+      color: #0f172a;
+    }
+
+    .radius-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .btn-radius-action {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      color: #0f766e;
+      font-weight: 700;
+      font-size: 11px;
+      padding: 6px;
+      border-radius: 6px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s;
+    }
+
+    .btn-radius-action:hover {
+      background: #f1f5f9;
+      border-color: #0f766e;
+    }
+
+    .radius-locations-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 320px;
+      overflow-y: auto;
+    }
+
+    .radius-location-item {
+      border-bottom: 1px dashed #e2e8f0;
+      padding-bottom: 6px;
+    }
+
+    .loc-item-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 6px;
+    }
+
+    .loc-item-name {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #1e293b;
+    }
+
+    .loc-item-dist {
+      font-size: 10.5px;
+      font-weight: 800;
+      color: #0f766e;
+      white-space: nowrap;
+    }
+
+    .loc-item-sub {
+      font-size: 10px;
+      color: #64748b;
+      margin-top: 2px;
+    }
+
+    .no-store-city {
+      font-size: 11.5px;
+      color: #94a3b8;
+      font-style: italic;
+      text-align: center;
+      padding: 10px 0;
+    }
+
+    .radius-footer-accordion {
+      background: #ea580c;
+      color: #ffffff;
+      padding: 8px 12px;
+      font-size: 11px;
+      font-weight: 800;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body>
 
-  <!-- NAVBAR HEADER -->
+  <!-- NAVBAR -->
   <header class="navbar">
     <div class="brand">
-      <!-- Logo Xiaomi Resmi -->
-      <div class="logo-box">
-        <svg width="32" height="32" viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg">
-          <path fill="#FF6900" d="M 500,0 C 820,0 1000,180 1000,500 C 1000,820 820,1000 500,1000 C 180,1000 0,820 0,500 C 0,180 180,0 500,0 Z"/>
-          <path fill="#FFFFFF" d="M 190,710 V 310 h 320 c 80,0 130,50 130,130 v 270 h -100 V 440 c 0,-40 -20,-50 -50,-50 H 290 v 320 Z"/>
-          <rect fill="#FFFFFF" x="370" y="450" width="90" height="260"/>
-          <rect fill="#FFFFFF" x="710" y="310" width="100" height="400"/>
-        </svg>
+      <div class="brand-logo-xiaomi" title="Xiaomi Store Locator" style="background: none; padding: 0; box-shadow: none;">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/a/ae/Xiaomi_logo_%282021-%29.svg" alt="Xiaomi Logo" style="width: 40px; height: 40px; border-radius: 12px; display: block;">
       </div>
       <div>
-        <h1>IDN - Xiaomi Store Locator (Self-Operated & Authorized Store)</h1>
-        <p>Interactive Map & Distribution</p>
+        <h1>Indonesia Xiaomi Store Locator</h1>
+        <p>Interactive Distribution Map for Self-Operated & Authorized Stores</p>
       </div>
     </div>
 
-    <!-- STATS COUNTER -->
+    <!-- STATS -->
     <div class="stats-container">
       <div class="stat-card">
-        <span class="stat-label">TOTAL STORES</span>
-        <span class="stat-value" id="stat-total">0</span>
+        <div class="stat-content">
+          <span class="stat-label">Total Stores</span>
+          <h2 id="stat-total">0</h2>
+          <span class="stat-sub">Active & Pipeline</span>
+        </div>
+        <div class="stat-icon orange-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+        </div>
       </div>
+
       <div class="stat-card">
-        <span class="stat-label">EXISTING</span>
-        <span class="stat-value text-orange" id="stat-existing">0</span>
+        <div class="stat-content">
+          <span class="stat-label">Operations</span>
+          <h2 id="stat-existing">0</h2>
+          <span class="stat-sub">Active Stores</span>
+        </div>
+        <div class="stat-icon blue-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+        </div>
       </div>
+
       <div class="stat-card">
-        <span class="stat-label">PROGRESS</span>
-        <span class="stat-value text-blue" id="stat-progress">0</span>
+        <div class="stat-content">
+          <span class="stat-label">Upcoming</span>
+          <h2 id="stat-progress">0</h2>
+          <span class="stat-sub">In Pipeline</span>
+        </div>
+        <div class="stat-icon purple-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+        </div>
       </div>
+
       <div class="stat-card">
-        <span class="stat-label">NO STORE IN THE MALL</span>
-        <span class="stat-value text-green" id="stat-nostore">0</span>
+        <div class="stat-content">
+          <span class="stat-label">No Store In Mall</span>
+          <h2 id="stat-nostore">0</h2>
+          <span class="stat-sub">Potential Mall</span>
+        </div>
+        <div class="stat-icon green-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+        </div>
       </div>
     </div>
   </header>
 
   <!-- MAIN LAYOUT -->
-  <main class="main-layout">
-    <!-- SIDEBAR LEFT -->
+  <div class="main-layout">
+    
+    <!-- SIDEBAR -->
     <aside class="sidebar">
       <div class="filter-section">
-        <input type="text" id="search-input" class="search-box" placeholder="🔍 Cari toko, mall, partner, atau kota...">
-        
-        <!-- MULTI-SELECT DROPDOWNS -->
+        <div class="search-box-wrapper">
+          <span class="search-box-icon">🔍</span>
+          <input type="text" id="search-input" class="search-box" placeholder="Cari toko, mall, partner, atau kota...">
+        </div>
+
         <div class="filter-grid">
           <div class="filter-row">
             <div class="custom-multiselect" id="ms-partner">
-              <button class="multiselect-btn"><span>Partner</span> <i class="arrow">▼</i></button>
+              <button class="multiselect-btn"><span>Partner</span> ▼</button>
               <div class="multiselect-dropdown"></div>
             </div>
             <div class="custom-multiselect" id="ms-region">
-              <button class="multiselect-btn"><span>Region</span> <i class="arrow">▼</i></button>
+              <button class="multiselect-btn"><span>Region</span> ▼</button>
               <div class="multiselect-dropdown"></div>
             </div>
           </div>
+
           <div class="filter-row">
             <div class="custom-multiselect" id="ms-province">
-              <button class="multiselect-btn"><span>Province</span> <i class="arrow">▼</i></button>
+              <button class="multiselect-btn"><span>Province</span> ▼</button>
               <div class="multiselect-dropdown"></div>
             </div>
             <div class="custom-multiselect" id="ms-city">
-              <button class="multiselect-btn"><span>City</span> <i class="arrow">▼</i></button>
+              <button class="multiselect-btn"><span>City</span> ▼</button>
               <div class="multiselect-dropdown"></div>
             </div>
           </div>
+
           <div class="filter-row">
             <div class="custom-multiselect" id="ms-type">
-              <button class="multiselect-btn"><span>Type</span> <i class="arrow">▼</i></button>
+              <button class="multiselect-btn"><span>Type</span> ▼</button>
               <div class="multiselect-dropdown"></div>
             </div>
             <div class="custom-multiselect" id="ms-grade">
-              <button class="multiselect-btn"><span>Mall Grade</span> <i class="arrow">▼</i></button>
+              <button class="multiselect-btn"><span>Mall Grade</span> ▼</button>
               <div class="multiselect-dropdown"></div>
             </div>
           </div>
-          <div class="filter-row">
-            <div class="custom-multiselect full-width" id="ms-status">
-              <button class="multiselect-btn"><span>Status</span> <i class="arrow">▼</i></button>
-              <div class="multiselect-dropdown"></div>
-            </div>
+
+          <div class="custom-multiselect full-width" id="ms-status">
+            <button class="multiselect-btn"><span>Status</span> ▼</button>
+            <div class="multiselect-dropdown"></div>
           </div>
         </div>
       </div>
 
       <div class="store-count-info">
-        <span id="stores-found-text">0 lokasi toko ditemukan</span>
+        <span id="stores-found-text">0 lokasi ditemukan</span>
         <button id="reset-btn">Reset Filter</button>
       </div>
 
-      <!-- STORE LIST CARDS -->
-      <div class="store-list" id="store-list">
-        <!-- RENDER JS -->
-      </div>
+      <div class="store-list" id="store-list"></div>
     </aside>
 
-    <!-- MAP CONTAINER -->
-    <section class="map-container">
+    <!-- MAP CONTAINER & LEGENDA -->
+    <main class="map-container">
+      <div class="map-legend">
+        <div class="legend-item">
+          <span class="legend-dot" style="background-color: #ff6700;"></span> Existing
+        </div>
+        <div class="legend-item">
+          <span class="legend-dot" style="background-color: #2563eb;"></span> Progress
+        </div>
+        <div class="legend-item">
+          <span class="legend-dot" style="background-color: #059669;"></span> No Store
+        </div>
+      </div>
+
       <div id="map"></div>
-    </section>
-  </main>
+    </main>
+
+  </div>
 
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <!-- Custom Script -->
-  <script src="script.js"></script>
+
+  <script>
+    const map = L.map('map').setView([-2.548926, 118.014863], 5);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    let allStores = [];
+    let filteredStores = [];
+    let markersLayer = L.layerGroup().addTo(map);
+    let radiusCirclesGroup = L.layerGroup().addTo(map);
+    let connectionLinesGroup = L.layerGroup().addTo(map);
+    let currentActiveStore = null;
+
+    const selectedFilters = {
+      partner: [],
+      region: [],
+      province: [],
+      city: [],
+      type: [],
+      grade: [],
+      status: ['EXISTING', 'PROGRESS']
+    };
+
+    function getPinSizeByZoom(zoomLevel) {
+      if (zoomLevel >= 15) return { width: 28, height: 38 }; 
+      if (zoomLevel >= 12) return { width: 22, height: 30 }; 
+      if (zoomLevel >= 9)  return { width: 16, height: 22 }; 
+      return { width: 12, height: 16 };                       
+    }
+
+    function createMapPinIcon(status, zoomLevel) {
+      const { width, height } = getPinSizeByZoom(zoomLevel);
+      const st = String(status || '').toUpperCase();
+
+      let lightColor = '#FF6700'; 
+      let darkColor  = '#D95300';
+
+      if (st === 'PROGRESS' || st === 'UPCOMING') {
+        lightColor = '#2563EB';  
+        darkColor  = '#1D4ED8';
+      } else if (st === 'NO STORE' || st === 'POTENTIAL' || st === 'NO MALL') {
+        lightColor = '#059669';  
+        darkColor  = '#047857';
+      }
+
+      const svgPin = `
+        <svg viewBox="0 0 100 130" style="width: 100%; height: 100%; filter: drop-shadow(0px 2px 3px rgba(0,0,0,0.35));" xmlns="http://www.w3.org/2000/svg">
+          <path d="M50 0 C22.386 0 0 22.386 0 50 C0 80 50 130 50 130 C50 130 100 80 100 50 C100 22.386 77.614 0 50 0 Z" fill="#FFFFFF"/>
+          <path d="M50 6 C25.7 6 6 25.7 6 50 C6 76 50 121 50 121 Z" fill="${lightColor}"/>
+          <path d="M50 6 C74.3 6 94 25.7 94 50 C94 76 50 121 50 121 Z" fill="${darkColor}"/>
+          <circle cx="50" cy="48" r="18" fill="#FFFFFF"/>
+          <circle cx="50" cy="48" r="10" fill="${lightColor}"/>
+        </svg>
+      `;
+
+      return L.divIcon({
+        className: 'custom-map-pin-icon',
+        html: `<div style="width: ${width}px; height: ${height}px;">${svgPin}</div>`,
+        iconSize: [width, height],
+        iconAnchor: [width / 2, height],
+        popupAnchor: [0, -height]
+      });
+    }
+
+    function parseNum(val) {
+      if (typeof val === 'number') return val;
+      if (typeof val === 'string') {
+        const cleaned = val.replace(',', '.').trim();
+        const num = parseFloat(cleaned);
+        return isNaN(num) ? NaN : num;
+      }
+      return NaN;
+    }
+
+    function formatPopulation(val) {
+      if (val === undefined || val === null || val === '' || val === '-') return '-';
+      const cleaned = String(val).replace(/[^0-9]/g, '');
+      if (!cleaned) return String(val);
+      return Number(cleaned).toLocaleString('en-US');
+    }
+
+    function getGradeVal(store) {
+      return store["Grade"] || store["Mall Grade"] || store["Mall_Grade"] || store["Grade Mall"] || store["GRADE"] || store["Store Grade"] || '';
+    }
+
+    function getDistanceInKm(lat1, lon1, lat2, lon2) {
+      const R = 6371;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = 
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
+    }
+
+    function formatDistance(distKm) {
+      if (distKm < 1) return `${Math.round(distKm * 1000)} m`;
+      return `${distKm.toFixed(2)} km`;
+    }
+
+    function normalizeCityName(cityName) {
+      if (!cityName) return '';
+      return cityName.toString().toLowerCase().replace(/^(kota|kabupaten|kab\.)\s+/g, '').trim();
+    }
+
+    async function fetchJsonData(fileName) {
+      const paths = [`../output/${fileName}`, `output/${fileName}`, `./output/${fileName}`, `./${fileName}`, fileName];
+      for (const path of paths) {
+        try {
+          const res = await fetch(path);
+          if (res.ok) {
+            const data = await res.json();
+            if (Array.isArray(data) && data.length > 0) return data;
+          }
+        } catch (e) {}
+      }
+      return [];
+    }
+
+    async function loadStoresData() {
+      const storesData = await fetchJsonData('stores.json');
+      const candidatesData = await fetchJsonData('mall_candidate.json');
+
+      const formattedStores = storesData.map(s => {
+        let st = String(s.Status || 'EXISTING').trim().toUpperCase();
+        if (st.includes('EXIST')) st = 'EXISTING';
+        else if (st.includes('PROGRESS') || st.includes('UPCOMING')) st = 'PROGRESS';
+        else st = 'EXISTING';
+        return { ...s, Status: st };
+      });
+
+      const formattedCandidates = candidatesData.map(c => ({ ...c, Status: 'NO STORE', isCandidate: true }));
+
+      allStores = [...formattedStores, ...formattedCandidates];
+      setupMultiSelects();
+      applyFilters();
+    }
+
+    loadStoresData();
+
+    const filterConfigs = [
+      { id: 'ms-partner', key: 'partner', field: 'Partner', label: 'Partner' },
+      { id: 'ms-region', key: 'region', field: 'Region', label: 'Region' },
+      { id: 'ms-province', key: 'province', field: 'Province', label: 'Province' },
+      { id: 'ms-city', key: 'city', field: 'City', label: 'City' },
+      { id: 'ms-type', key: 'type', field: 'Type', label: 'Type' },
+      { id: 'ms-grade', key: 'grade', customGetter: getGradeVal, label: 'Mall Grade' },
+      { id: 'ms-status', key: 'status', customOptions: ['EXISTING', 'PROGRESS', 'NO STORE'], label: 'Status' }
+    ];
+
+    function setupMultiSelects() {
+      filterConfigs.forEach(cfg => {
+        const container = document.getElementById(cfg.id);
+        if (!container) return;
+
+        const btn = container.querySelector('.multiselect-btn');
+        const dropdown = container.querySelector('.multiselect-dropdown');
+
+        let options = [];
+        if (cfg.customOptions) {
+          options = cfg.customOptions;
+        } else {
+          options = [...new Set(allStores.map(item => cfg.customGetter ? cfg.customGetter(item) : item[cfg.field]).filter(Boolean))].sort();
+        }
+
+        dropdown.innerHTML = '';
+        options.forEach(optVal => {
+          const isChecked = selectedFilters[cfg.key].includes(optVal);
+          const label = document.createElement('label');
+          label.className = 'multiselect-option';
+          label.innerHTML = `<input type="checkbox" value="${optVal}" ${isChecked ? 'checked' : ''}><span>${optVal}</span>`;
+
+          const checkbox = label.querySelector('input');
+          checkbox.addEventListener('change', () => {
+            if (checkbox.checked) selectedFilters[cfg.key].push(optVal);
+            else selectedFilters[cfg.key] = selectedFilters[cfg.key].filter(v => v !== optVal);
+            updateBtnLabel(btn, cfg.label, selectedFilters[cfg.key]);
+            applyFilters();
+          });
+          dropdown.appendChild(label);
+        });
+
+        updateBtnLabel(btn, cfg.label, selectedFilters[cfg.key]);
+
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          document.querySelectorAll('.multiselect-dropdown').forEach(d => { if (d !== dropdown) d.classList.remove('show'); });
+          dropdown.classList.toggle('show');
+        });
+      });
+
+      document.addEventListener('click', () => {
+        document.querySelectorAll('.multiselect-dropdown').forEach(d => d.classList.remove('show'));
+      });
+
+      const searchInput = document.getElementById('search-input');
+      if (searchInput) searchInput.addEventListener('input', applyFilters);
+
+      const resetBtn = document.getElementById('reset-btn');
+      if (resetBtn) resetBtn.addEventListener('click', resetFilters);
+    }
+
+    function updateBtnLabel(btn, defaultLabel, selectedArray) {
+      const span = btn.querySelector('span');
+      if (!span) return;
+      if (selectedArray.length === 0) span.textContent = defaultLabel;
+      else if (selectedArray.length === 1) span.textContent = selectedArray[0];
+      else span.textContent = `${defaultLabel} (${selectedArray.length})`;
+    }
+
+    function applyFilters() {
+      const searchInput = document.getElementById('search-input');
+      const searchVal = searchInput ? searchInput.value.toLowerCase() : '';
+
+      filteredStores = allStores.filter(store => {
+        const storeName = store["Store Name"] || store["Mall Name"] || store["Name"] || '';
+        const storeGrade = getGradeVal(store);
+        const storeStatus = store["Status"] || 'NO STORE';
+
+        const matchSearch = !searchVal || 
+          storeName.toLowerCase().includes(searchVal) ||
+          (store["Partner"] || '').toLowerCase().includes(searchVal) ||
+          (store["City"] || '').toLowerCase().includes(searchVal) ||
+          storeGrade.toLowerCase().includes(searchVal);
+
+        const matchPartner = selectedFilters.partner.length === 0 || selectedFilters.partner.includes(store["Partner"]);
+        const matchRegion = selectedFilters.region.length === 0 || selectedFilters.region.includes(store["Region"]);
+        const matchProvince = selectedFilters.province.length === 0 || selectedFilters.province.includes(store["Province"]);
+        const matchCity = selectedFilters.city.length === 0 || selectedFilters.city.includes(store["City"]);
+        const matchType = selectedFilters.type.length === 0 || selectedFilters.type.includes(store["Type"]);
+        const matchGrade = selectedFilters.grade.length === 0 || selectedFilters.grade.includes(storeGrade);
+        const matchStatus = selectedFilters.status.length === 0 || selectedFilters.status.includes(storeStatus);
+
+        return matchSearch && matchPartner && matchRegion && matchProvince && matchCity && matchType && matchGrade && matchStatus;
+      });
+
+      closeRightRadiusPanel();
+      updateDashboard();
+    }
+
+    function resetFilters() {
+      const searchInput = document.getElementById('search-input');
+      if (searchInput) searchInput.value = '';
+
+      filterConfigs.forEach(cfg => {
+        selectedFilters[cfg.key] = cfg.key === 'status' ? ['EXISTING', 'PROGRESS'] : [];
+        const container = document.getElementById(cfg.id);
+        if (container) {
+          updateBtnLabel(container.querySelector('.multiselect-btn'), cfg.label, selectedFilters[cfg.key]);
+          container.querySelectorAll('input[type="checkbox"]').forEach(cb => { cb.checked = selectedFilters[cfg.key].includes(cb.value); });
+        }
+      });
+
+      closeRightRadiusPanel();
+      applyFilters();
+    }
+
+    function updateDashboard() {
+      const existing = filteredStores.filter(s => String(s["Status"]).toUpperCase() === 'EXISTING').length;
+      const progress = filteredStores.filter(s => String(s["Status"]).toUpperCase() === 'PROGRESS').length;
+      const noStore = filteredStores.filter(s => String(s["Status"]).toUpperCase() === 'NO STORE').length;
+      const totalAll = filteredStores.length;
+
+      document.getElementById('stat-total').textContent = totalAll;
+      document.getElementById('stat-existing').textContent = existing;
+      document.getElementById('stat-progress').textContent = progress;
+      document.getElementById('stat-nostore').textContent = noStore;
+      document.getElementById('stores-found-text').textContent = `${totalAll} lokasi ditemukan`;
+
+      renderStoreList();
+      renderMarkers();
+    }
+
+    function renderStoreList() {
+      const listContainer = document.getElementById('store-list');
+      if (!listContainer) return;
+      listContainer.innerHTML = '';
+
+      filteredStores.forEach(store => {
+        const status = store["Status"] || 'NO STORE';
+        let badgeClass = status === 'EXISTING' ? 'badge-existing' : (status === 'PROGRESS' ? 'badge-progress' : 'badge-nostore');
+
+        const storeGrade = getGradeVal(store);
+        const gradeBadgeHtml = storeGrade ? `<span class="badge" style="background:#e0e7ff; color:#3730a3;">${storeGrade}</span>` : '';
+        const name = store["Store Name"] || store["Mall Name"] || store["Name"] || 'Xiaomi Store / Mall';
+
+        const lat = parseNum(store["Latitude"]);
+        const lng = parseNum(store["Longitude"]);
+        const populationFormatted = formatPopulation(store['POPULATION'] || store['Population'] || store['City Population']);
+
+        const searchName = store["Mall Name"] || store["Store Name"] || store["Name"];
+        const cityName = store["City"] || '';
+        let mapsLink = searchName ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${searchName} ${cityName}`.trim())}` : '#';
+
+        const mapsBtnHtml = mapsLink !== '#' ? `<div class="maps-link-container"><a href="${mapsLink}" target="_blank" rel="noopener noreferrer" class="btn-maps-link">📍 Maps Link</a></div>` : '';
+
+        const card = document.createElement('div');
+        card.className = 'store-card';
+        card.innerHTML = `
+          <div class="card-header">
+            <div class="card-title">${name}</div>
+            <div class="badge-group">${gradeBadgeHtml}<span class="badge ${badgeClass}">${status}</span></div>
+          </div>
+          ${mapsBtnHtml}
+          <div class="card-meta-row">
+            <div class="card-partner">🏢 ${store["Partner"] || '-'}</div>
+            <div class="card-address">📍 ${store["City"] || ''}, ${store["Province"] || ''}</div>
+          </div>
+          <div class="store-extra-info">
+            <span>City Population</span>
+            <strong style="color: #0f172a;">${populationFormatted}</strong>
+          </div>
+        `;
+
+        card.addEventListener('click', (e) => {
+          if (e.target.tagName === 'A') return;
+          if (!isNaN(lat) && !isNaN(lng)) {
+            map.flyTo([lat, lng], 13);
+            selectStoreAndTriggerRadius(store);
+          }
+        });
+
+        listContainer.appendChild(card);
+      });
+    }
+
+    function renderMarkers() {
+      markersLayer.clearLayers();
+      const currentZoom = map.getZoom();
+
+      filteredStores.forEach(store => {
+        const lat = parseNum(store["Latitude"]);
+        const lng = parseNum(store["Longitude"]);
+        if (isNaN(lat) || isNaN(lng)) return;
+
+        const marker = L.marker([lat, lng], { icon: createMapPinIcon(store["Status"], currentZoom) });
+        const name = store["Store Name"] || store["Mall Name"] || store["Name"] || 'Xiaomi Store';
+        const searchName = store["Mall Name"] || store["Store Name"] || store["Name"];
+        const cityName = store["City"] || '';
+        const mapsLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${searchName} ${cityName}`.trim())}`;
+
+        marker.bindPopup(`
+          <div style="font-weight:bold; font-size:12px; margin-bottom:3px;">${name}</div>
+          <div style="font-size:10.5px; color:#666; margin-bottom:5px;">${store["Address"] || ''}</div>
+          <a href="${mapsLink}" target="_blank" rel="noopener noreferrer" class="btn-maps-link">📍 Maps Link</a>
+          <div style="font-size:10.5px; line-height:1.4; margin-top:5px; border-top:1px dashed #e2e8f0; padding-top:5px;">
+            <b>Partner:</b> ${store["Partner"] || '-'}<br>
+            <b>Status:</b> ${store["Status"]}<br>
+            <b>City Population:</b> ${formatPopulation(store['POPULATION'] || store['Population'])}
+          </div>
+        `);
+
+        marker.on('click', (e) => {
+          L.DomEvent.stopPropagation(e);
+          selectStoreAndTriggerRadius(store);
+        });
+
+        markersLayer.addLayer(marker);
+      });
+    }
+
+    map.on('zoomend', () => renderMarkers());
+
+    // Event ketika area kosong pada peta diklik, maka panel radius otomatis tertutup
+    map.on('click', () => {
+      closeRightRadiusPanel();
+    });
+
+    function selectStoreAndTriggerRadius(store) {
+      currentActiveStore = store;
+      updateRadiusPanelUI();
+    }
+
+    function updateRadiusPanelUI() {
+      if (!currentActiveStore) return;
+      const targetLat = parseNum(currentActiveStore["Latitude"]);
+      const targetLng = parseNum(currentActiveStore["Longitude"]);
+      if (isNaN(targetLat) || isNaN(targetLng)) return;
+
+      const targetCityNorm = normalizeCityName(currentActiveStore["City"] || '');
+      const sameCityStores = filteredStores.filter(store => {
+        if (store["Latitude"] === currentActiveStore["Latitude"] && store["Longitude"] === currentActiveStore["Longitude"]) return false;
+        return normalizeCityName(store["City"] || '') === targetCityNorm && targetCityNorm !== '';
+      }).map(store => ({ ...store, distance: getDistanceInKm(targetLat, targetLng, parseNum(store["Latitude"]), parseNum(store["Longitude"])) }))
+      .sort((a, b) => a.distance - b.distance);
+
+      connectionLinesGroup.clearLayers();
+      renderRightRadiusPanelHTML(currentActiveStore, sameCityStores, currentActiveStore["City"]);
+    }
+
+    function renderRightRadiusPanelHTML(activeStore, sameCityStoresSorted, cityName) {
+      let panel = document.getElementById('right-info-panel');
+      if (!panel) {
+        panel = document.createElement('div');
+        panel.id = 'right-info-panel';
+        panel.className = 'right-info-panel';
+        document.querySelector('.map-container').appendChild(panel);
+      }
+
+      let locationsHtml = sameCityStoresSorted.length === 0 ? `<div class="no-store-city">Tidak ada store lain di ${cityName || 'kota ini'}.</div>` : '';
+      sameCityStoresSorted.forEach(store => {
+        const name = store["Store Name"] || store["Mall Name"] || store["Name"];
+        locationsHtml += `
+          <div class="radius-location-item">
+            <div class="loc-item-header">
+              <div class="loc-item-name">${name}</div>
+              <div class="loc-item-dist">${formatDistance(store.distance)}</div>
+            </div>
+            <div class="loc-item-sub">${store["Status"]} • ${store["City"]} • ${store["Province"]}</div>
+          </div>
+        `;
+      });
+
+      panel.innerHTML = `
+        <div class="radius-header">
+          <div class="radius-title-box"><span>✛</span> RADIUS</div>
+          <div class="radius-count-badge">${sameCityStoresSorted.length}</div>
+        </div>
+        <div class="radius-content">
+          <div class="center-store-title">
+            Radius center: <strong>${activeStore["Store Name"] || activeStore["Mall Name"]}</strong>
+            <div style="font-size:10px; color:#64748b; margin-top:1px;">Menampilkan toko di <b>${cityName || 'Kota ini'}</b></div>
+          </div>
+          <div class="radius-actions">
+            <button id="btn-radius-clear" class="btn-radius-action">Clear</button>
+            <button id="btn-radius-export" class="btn-radius-action">Export Matrix</button>
+          </div>
+          <div class="radius-locations-list">${locationsHtml}</div>
+        </div>
+        <div class="radius-footer-accordion"><span>▼ BUSINESS UNITS - 2 KM</span></div>
+      `;
+
+      panel.style.display = 'flex';
+      document.getElementById('btn-radius-clear').addEventListener('click', closeRightRadiusPanel);
+      document.getElementById('btn-radius-export').addEventListener('click', () => alert('Exporting distance matrix data...'));
+    }
+
+    function closeRightRadiusPanel() {
+      const panel = document.getElementById('right-info-panel');
+      if (panel) panel.style.display = 'none';
+      currentActiveStore = null;
+      radiusCirclesGroup.clearLayers();
+      connectionLinesGroup.clearLayers();
+    }
+  </script>
 </body>
 </html>
