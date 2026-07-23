@@ -3,21 +3,30 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>IDN - Xiaomi Authorized Store Locator</title>
+  <title>IDN - Xiaomi Store Locator</title>
   
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <!-- Custom Style -->
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <!-- HEADER / NAVBAR TOP -->
+  <!-- NAVBAR HEADER -->
   <header class="navbar">
     <div class="brand">
-      <img src="https://upload.wikimedia.org/wikipedia/commons/2/29/Xiaomi_logo.svg" alt="Xiaomi Logo" class="logo">
+      <!-- Logo Xiaomi Resmi -->
+      <div class="logo-box">
+        <svg width="32" height="32" viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg">
+          <path fill="#FF6900" d="M 500,0 C 820,0 1000,180 1000,500 C 1000,820 820,1000 500,1000 C 180,1000 0,820 0,500 C 0,180 180,0 500,0 Z"/>
+          <path fill="#FFFFFF" d="M 190,710 V 310 h 320 c 80,0 130,50 130,130 v 270 h -100 V 440 c 0,-40 -20,-50 -50,-50 H 290 v 320 Z"/>
+          <rect fill="#FFFFFF" x="370" y="450" width="90" height="260"/>
+          <rect fill="#FFFFFF" x="710" y="310" width="100" height="400"/>
+        </svg>
+      </div>
       <div>
-        <h1>IDN - Xiaomi Authorized Store Locator</h1>
-        <p>Location intelligence & store coverage mapping</p>
+        <h1>IDN - Xiaomi Store Locator (Self-Operated & Authorized Store)</h1>
+        <p>Interactive Map & Distribution</p>
       </div>
     </div>
 
@@ -32,56 +41,84 @@
         <span class="stat-value text-orange" id="stat-existing">0</span>
       </div>
       <div class="stat-card">
-        <span class="stat-label">PROGRESS / UPCOMING</span>
+        <span class="stat-label">PROGRESS</span>
         <span class="stat-value text-blue" id="stat-progress">0</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">NO STORE IN THE MALL</span>
+        <span class="stat-value text-green" id="stat-nostore">0</span>
       </div>
     </div>
   </header>
 
-  <!-- MAIN CONTENT CONTAINER -->
-  <div class="main-layout">
-
-    <!-- SIDEBAR LEFT: FILTER & LIST TOKO -->
+  <!-- MAIN LAYOUT -->
+  <main class="main-layout">
+    <!-- SIDEBAR LEFT -->
     <aside class="sidebar">
       <div class="filter-section">
-        <input type="text" id="search-input" placeholder="🔍 Cari toko, partner, kota..." class="search-box">
+        <input type="text" id="search-input" class="search-box" placeholder="🔍 Cari toko, mall, partner, atau kota...">
         
+        <!-- MULTI-SELECT DROPDOWNS -->
         <div class="filter-grid">
-          <select id="filter-partner"><option value="">Semua Partner</option></select>
-          <select id="filter-region"><option value="">Semua Region</option></select>
-          
           <div class="filter-row">
-            <select id="filter-province"><option value="">Semua Provinsi</option></select>
-            <select id="filter-city"><option value="">Semua Kota</option></select>
+            <div class="custom-multiselect" id="ms-partner">
+              <button class="multiselect-btn"><span>Partner</span> <i class="arrow">▼</i></button>
+              <div class="multiselect-dropdown"></div>
+            </div>
+            <div class="custom-multiselect" id="ms-region">
+              <button class="multiselect-btn"><span>Region</span> <i class="arrow">▼</i></button>
+              <div class="multiselect-dropdown"></div>
+            </div>
           </div>
-
           <div class="filter-row">
-            <select id="filter-type"><option value="">Semua Tipe</option></select>
-            <select id="filter-status"><option value="">Semua Status</option></select>
+            <div class="custom-multiselect" id="ms-province">
+              <button class="multiselect-btn"><span>Province</span> <i class="arrow">▼</i></button>
+              <div class="multiselect-dropdown"></div>
+            </div>
+            <div class="custom-multiselect" id="ms-city">
+              <button class="multiselect-btn"><span>City</span> <i class="arrow">▼</i></button>
+              <div class="multiselect-dropdown"></div>
+            </div>
+          </div>
+          <div class="filter-row">
+            <div class="custom-multiselect" id="ms-type">
+              <button class="multiselect-btn"><span>Type</span> <i class="arrow">▼</i></button>
+              <div class="multiselect-dropdown"></div>
+            </div>
+            <div class="custom-multiselect" id="ms-grade">
+              <button class="multiselect-btn"><span>Mall Grade</span> <i class="arrow">▼</i></button>
+              <div class="multiselect-dropdown"></div>
+            </div>
+          </div>
+          <div class="filter-row">
+            <div class="custom-multiselect full-width" id="ms-status">
+              <button class="multiselect-btn"><span>Status</span> <i class="arrow">▼</i></button>
+              <div class="multiselect-dropdown"></div>
+            </div>
           </div>
         </div>
       </div>
 
       <div class="store-count-info">
-        <span id="stores-found-text">0 toko ditemukan</span>
-        <button id="reset-btn" onclick="resetFilters()">Reset Filter</button>
+        <span id="stores-found-text">0 lokasi toko ditemukan</span>
+        <button id="reset-btn">Reset Filter</button>
       </div>
 
-      <!-- DAFTAR KARTU TOKO -->
+      <!-- STORE LIST CARDS -->
       <div class="store-list" id="store-list">
-        <!-- Rendered via JS -->
+        <!-- RENDER JS -->
       </div>
     </aside>
 
-    <!-- MAP CONTAINER CENTER -->
-    <main class="map-container">
+    <!-- MAP CONTAINER -->
+    <section class="map-container">
       <div id="map"></div>
-    </main>
+    </section>
+  </main>
 
-  </div>
-
-  <!-- Leaflet JS & Script -->
+  <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- Custom Script -->
   <script src="script.js"></script>
 </body>
 </html>
