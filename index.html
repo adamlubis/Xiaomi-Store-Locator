@@ -474,7 +474,7 @@
       box-shadow: 0 10px 24px rgba(0, 0, 0, 0.15);
       border: 1px solid #cbd5e1;
       z-index: 1000;
-      display: none; /* Default tersembunyi */
+      display: none;
       flex-direction: column;
       overflow: hidden;
       animation: slideInRight 0.2s ease-out;
@@ -624,7 +624,7 @@
       </div>
       <div>
         <h1>Indonesia Xiaomi Store Locator</h1>
-        <p>Interactive Distribution Map for Self-Operated & Authorized Stores</p>
+        <p>Interactive Map of Self-Operated & Authorized Store</p>
       </div>
     </div>
 
@@ -684,7 +684,7 @@
       <div class="filter-section">
         <div class="search-box-wrapper">
           <span class="search-box-icon">🔍</span>
-          <input type="text" id="search-input" class="search-box" placeholder="Cari toko, mall, partner, atau kota...">
+          <input type="text" id="search-input" class="search-box" placeholder="Search store, mall, partner, or city...">
         </div>
 
         <div class="filter-grid">
@@ -831,6 +831,11 @@
         return isNaN(num) ? NaN : num;
       }
       return NaN;
+    }
+
+    function getTextVal(val) {
+      if (val === undefined || val === null || val === '') return '-';
+      return String(val).trim();
     }
 
     function formatPopulation(val) {
@@ -1028,7 +1033,7 @@
       document.getElementById('stat-existing').textContent = existing;
       document.getElementById('stat-progress').textContent = progress;
       document.getElementById('stat-nostore').textContent = noStore;
-      document.getElementById('stores-found-text').textContent = `${totalAll} lokasi ditemukan`;
+      document.getElementById('stores-found-text').textContent = `${totalAll} location found`;
 
       renderStoreList();
       renderMarkers();
@@ -1053,7 +1058,10 @@
 
         const searchName = store["Mall Name"] || store["Store Name"] || store["Name"];
         const cityName = store["City"] || '';
-        let mapsLink = searchName ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${searchName} ${cityName}`.trim())}` : '#';
+        let mapsLink = getTextVal(store['Google Maps Link'] || store['Popul Link'] || store['Maps Link']);
+        if (mapsLink === '-') {
+          mapsLink = searchName ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${searchName} ${cityName}`.trim())}` : '#';
+        }
 
         const mapsBtnHtml = mapsLink !== '#' ? `<div class="maps-link-container"><a href="${mapsLink}" target="_blank" rel="noopener noreferrer" class="btn-maps-link">📍 Maps Link</a></div>` : '';
 
@@ -1098,18 +1106,42 @@
 
         const marker = L.marker([lat, lng], { icon: createMapPinIcon(store["Status"], currentZoom) });
         const name = store["Store Name"] || store["Mall Name"] || store["Name"] || 'Xiaomi Store';
+        const storeGrade = getGradeVal(store);
+        
+        const rawCost = parseNum(store["Rental Cost"]);
+        const rentalCost = !isNaN(rawCost) ? `Rp ${new Intl.NumberFormat('id-ID').format(rawCost)}` : '-';
+
         const searchName = store["Mall Name"] || store["Store Name"] || store["Name"];
         const cityName = store["City"] || '';
-        const mapsLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${searchName} ${cityName}`.trim())}`;
+        let mapsLink = getTextVal(store['Google Maps Link'] || store['Popul Link'] || store['Maps Link']);
+        if (mapsLink === '-') {
+          mapsLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${searchName} ${cityName}`.trim())}`;
+        }
+
+        const rawPop = store['POPULATION'] || store['Population'] || store['City Population'];
+        const populationFormatted = formatPopulation(rawPop);
+        
+        const dailyTraffic = getTextVal(store['Daily Traffic (Est)'] || store['Daily Traffic'] || store['Traffic']);
+        const monthlyTraffic = getTextVal(store['Monthly Traffic (Est)'] || store['Monthly Traffic']);
+
+        const mapsBtnHtml = (mapsLink && mapsLink !== '#') 
+          ? `<div class="maps-link-container" style="margin-top:4px;"><a href="${mapsLink}" target="_blank" rel="noopener noreferrer" class="btn-maps-link">📍 Maps Link</a></div>` 
+          : '';
 
         marker.bindPopup(`
-          <div style="font-weight:bold; font-size:12px; margin-bottom:3px;">${name}</div>
-          <div style="font-size:10.5px; color:#666; margin-bottom:5px;">${store["Address"] || ''}</div>
-          <a href="${mapsLink}" target="_blank" rel="noopener noreferrer" class="btn-maps-link">📍 Maps Link</a>
-          <div style="font-size:10.5px; line-height:1.4; margin-top:5px; border-top:1px dashed #e2e8f0; padding-top:5px;">
+          <div style="font-weight:bold; font-size:15px; margin-bottom:4px;">${name}</div>
+          <div style="font-size:11px; color:#666; margin-bottom:6px;">${store["Address"] || ''}</div>
+          ${mapsBtnHtml}
+          <div style="font-size:11px; line-height:1.5; margin-top:6px; border-top:1px dashed #e2e8f0; padding-top:6px;">
             <b>Partner:</b> ${store["Partner"] || '-'}<br>
+            <b>Region:</b> ${store["Region"] || '-'}<br>
+            <b>Mall Grade:</b> ${storeGrade || '-'}<br>
             <b>Status:</b> ${store["Status"]}<br>
-            <b>City Population:</b> ${formatPopulation(store['POPULATION'] || store['Population'])}
+            <b>Store Size / Area:</b> ${store["Store Size"] || '-'} sqm<br>
+            <b>Rental Cost:</b> ${rentalCost}<br>
+            <b>City Population:</b> ${populationFormatted}<br>
+            <b>Daily Traffic (Est):</b> ${dailyTraffic}<br>
+            <b>Monthly Traffic (Est):</b> ${monthlyTraffic}
           </div>
         `);
 
@@ -1124,7 +1156,6 @@
 
     map.on('zoomend', () => renderMarkers());
 
-    // Event ketika area kosong pada peta diklik, maka panel radius otomatis tertutup
     map.on('click', () => {
       closeRightRadiusPanel();
     });
