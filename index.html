@@ -45,18 +45,6 @@
       gap: 12px;
     }
 
-    .brand-logo-xiaomi {
-      width: 42px;
-      height: 42px;
-      background-color: #ff6700;
-      border-radius: 12px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      flex-shrink: 0;
-      box-shadow: 0 3px 8px rgba(255, 103, 0, 0.3);
-    }
-
     .brand h1 {
       font-size: 18px;
       font-weight: 800;
@@ -235,6 +223,7 @@
       color: #0f172a;
     }
 
+    /* DROPDOWN CONTAINER */
     .multiselect-dropdown {
       display: none;
       position: absolute;
@@ -244,26 +233,51 @@
       background: #ffffff;
       border: 1px solid #cbd5e1;
       border-radius: 7px;
-      max-height: 200px;
-      overflow-y: auto;
       z-index: 1000;
       box-shadow: 0 8px 20px rgba(0,0,0,0.08);
-      padding: 4px 0;
+      padding: 6px;
     }
 
     .multiselect-dropdown.show {
       display: block;
     }
 
+    /* SEARCH BAR DI DALAM DROPDOWN */
+    .dropdown-search-input {
+      width: 100%;
+      padding: 6px 10px;
+      font-size: 11px;
+      border: 1px solid #cbd5e1;
+      border-radius: 5px;
+      outline: none;
+      margin-bottom: 6px;
+      background: #f8fafc;
+    }
+
+    .dropdown-search-input:focus {
+      border-color: #ea580c;
+      background: #ffffff;
+    }
+
+    /* OPSI CONTAINER & SCROLL */
+    .dropdown-options-list {
+      max-height: 180px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
     .multiselect-option {
       display: flex;
       align-items: center;
       gap: 8px;
-      padding: 6px 12px;
+      padding: 5px 8px;
       font-size: 11px;
       cursor: pointer;
       color: #334155;
       font-weight: 500;
+      border-radius: 4px;
     }
 
     .multiselect-option:hover {
@@ -276,6 +290,29 @@
       accent-color: #ea580c;
       width: 13px;
       height: 13px;
+    }
+
+    /* TOMBOL AKSI KECIL DI DROPDOWN (SELECT ALL / CLEAR) */
+    .dropdown-actions {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 2px 6px 2px;
+      border-bottom: 1px solid #e2e8f0;
+      margin-bottom: 4px;
+      font-size: 10px;
+    }
+
+    .dropdown-action-btn {
+      background: none;
+      border: none;
+      color: #2563eb;
+      cursor: pointer;
+      font-weight: 600;
+      padding: 2px 4px;
+    }
+
+    .dropdown-action-btn:hover {
+      text-decoration: underline;
     }
 
     .store-count-info {
@@ -931,7 +968,22 @@
           options = [...new Set(allStores.map(item => cfg.customGetter ? cfg.customGetter(item) : item[cfg.field]).filter(Boolean))].sort();
         }
 
-        dropdown.innerHTML = '';
+        // Render struktur dropdown: Search input + Tombol Select All/Clear + List Opsi
+        dropdown.innerHTML = `
+          <input type="text" class="dropdown-search-input" placeholder="Search ${cfg.label.toLowerCase()}...">
+          <div class="dropdown-actions">
+            <button type="button" class="dropdown-action-btn select-all">Select All</button>
+            <button type="button" class="dropdown-action-btn clear-all">Clear</button>
+          </div>
+          <div class="dropdown-options-list"></div>
+        `;
+
+        const searchInput = dropdown.querySelector('.dropdown-search-input');
+        const optionsListContainer = dropdown.querySelector('.dropdown-options-list');
+        const btnSelectAll = dropdown.querySelector('.select-all');
+        const btnClearAll = dropdown.querySelector('.clear-all');
+
+        // Render opsi-opsi checkbox
         options.forEach(optVal => {
           const isChecked = selectedFilters[cfg.key].includes(optVal);
           const label = document.createElement('label');
@@ -940,29 +992,70 @@
 
           const checkbox = label.querySelector('input');
           checkbox.addEventListener('change', () => {
-            if (checkbox.checked) selectedFilters[cfg.key].push(optVal);
-            else selectedFilters[cfg.key] = selectedFilters[cfg.key].filter(v => v !== optVal);
+            if (checkbox.checked) {
+              if (!selectedFilters[cfg.key].includes(optVal)) selectedFilters[cfg.key].push(optVal);
+            } else {
+              selectedFilters[cfg.key] = selectedFilters[cfg.key].filter(v => v !== optVal);
+            }
             updateBtnLabel(btn, cfg.label, selectedFilters[cfg.key]);
             applyFilters();
           });
-          dropdown.appendChild(label);
+          optionsListContainer.appendChild(label);
+        });
+
+        // Fitur Real-time Search di dalam dropdown
+        searchInput.addEventListener('input', (e) => {
+          const term = e.target.value.toLowerCase();
+          const optionLabels = optionsListContainer.querySelectorAll('.multiselect-option');
+          optionLabels.forEach(lbl => {
+            const text = lbl.textContent.toLowerCase();
+            lbl.style.display = text.includes(term) ? 'flex' : 'none';
+          });
+        });
+
+        // Mencegah dropdown tertutup saat mengklik input search
+        searchInput.addEventListener('click', (e) => e.stopPropagation());
+
+        // Tombol Select All di dalam dropdown
+        btnSelectAll.addEventListener('click', (e) => {
+          e.stopPropagation();
+          selectedFilters[cfg.key] = [...options];
+          optionsListContainer.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = true);
+          updateBtnLabel(btn, cfg.label, selectedFilters[cfg.key]);
+          applyFilters();
+        });
+
+        // Tombol Clear di dalam dropdown
+        btnClearAll.addEventListener('click', (e) => {
+          e.stopPropagation();
+          selectedFilters[cfg.key] = [];
+          optionsListContainer.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+          updateBtnLabel(btn, cfg.label, selectedFilters[cfg.key]);
+          applyFilters();
         });
 
         updateBtnLabel(btn, cfg.label, selectedFilters[cfg.key]);
 
+        // Toggle buka/tutup dropdown
         btn.addEventListener('click', (e) => {
           e.stopPropagation();
-          document.querySelectorAll('.multiselect-dropdown').forEach(d => { if (d !== dropdown) d.classList.remove('show'); });
+          document.querySelectorAll('.multiselect-dropdown').forEach(d => { 
+            if (d !== dropdown) d.classList.remove('show'); 
+          });
           dropdown.classList.toggle('show');
+          if (dropdown.classList.contains('show')) {
+            searchInput.focus();
+          }
         });
       });
 
+      // Menutup dropdown jika mengklik area luar
       document.addEventListener('click', () => {
         document.querySelectorAll('.multiselect-dropdown').forEach(d => d.classList.remove('show'));
       });
 
-      const searchInput = document.getElementById('search-input');
-      if (searchInput) searchInput.addEventListener('input', applyFilters);
+      const mainSearchInput = document.getElementById('search-input');
+      if (mainSearchInput) mainSearchInput.addEventListener('input', applyFilters);
 
       const resetBtn = document.getElementById('reset-btn');
       if (resetBtn) resetBtn.addEventListener('click', resetFilters);
@@ -1016,6 +1109,13 @@
         if (container) {
           updateBtnLabel(container.querySelector('.multiselect-btn'), cfg.label, selectedFilters[cfg.key]);
           container.querySelectorAll('input[type="checkbox"]').forEach(cb => { cb.checked = selectedFilters[cfg.key].includes(cb.value); });
+          
+          // Reset juga input search di dalam dropdown jika ada yang terisi
+          const dropdownSearch = container.querySelector('.dropdown-search-input');
+          if (dropdownSearch) {
+            dropdownSearch.value = '';
+            container.querySelectorAll('.multiselect-option').forEach(lbl => lbl.style.display = 'flex');
+          }
         }
       });
 
