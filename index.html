@@ -242,7 +242,6 @@
       display: block;
     }
 
-    /* SEARCH BAR DI DALAM DROPDOWN */
     .dropdown-search-input {
       width: 100%;
       padding: 6px 10px;
@@ -259,7 +258,6 @@
       background: #ffffff;
     }
 
-    /* OPSI CONTAINER & SCROLL */
     .dropdown-options-list {
       max-height: 180px;
       overflow-y: auto;
@@ -292,7 +290,6 @@
       height: 13px;
     }
 
-    /* TOMBOL AKSI KECIL DI DROPDOWN (SELECT ALL / CLEAR) */
     .dropdown-actions {
       display: flex;
       justify-content: space-between;
@@ -456,6 +453,19 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+    }
+
+    /* STYLING Kustom untuk Tooltip saat di-Hover */
+    .store-hover-tooltip {
+      background: rgba(255, 255, 255, 0.95);
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 10.5px;
+      font-weight: 600;
+      color: #0f172a;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      white-space: nowrap;
     }
 
     /* ================= MAP CONTAINER & LEGEND ================= */
@@ -968,7 +978,6 @@
           options = [...new Set(allStores.map(item => cfg.customGetter ? cfg.customGetter(item) : item[cfg.field]).filter(Boolean))].sort();
         }
 
-        // Render struktur dropdown: Search input + Tombol Select All/Clear + List Opsi
         dropdown.innerHTML = `
           <input type="text" class="dropdown-search-input" placeholder="Search ${cfg.label.toLowerCase()}...">
           <div class="dropdown-actions">
@@ -983,7 +992,6 @@
         const btnSelectAll = dropdown.querySelector('.select-all');
         const btnClearAll = dropdown.querySelector('.clear-all');
 
-        // Render opsi-opsi checkbox
         options.forEach(optVal => {
           const isChecked = selectedFilters[cfg.key].includes(optVal);
           const label = document.createElement('label');
@@ -1003,7 +1011,6 @@
           optionsListContainer.appendChild(label);
         });
 
-        // Fitur Real-time Search di dalam dropdown
         searchInput.addEventListener('input', (e) => {
           const term = e.target.value.toLowerCase();
           const optionLabels = optionsListContainer.querySelectorAll('.multiselect-option');
@@ -1013,10 +1020,8 @@
           });
         });
 
-        // Mencegah dropdown tertutup saat mengklik input search
         searchInput.addEventListener('click', (e) => e.stopPropagation());
 
-        // Tombol Select All di dalam dropdown
         btnSelectAll.addEventListener('click', (e) => {
           e.stopPropagation();
           selectedFilters[cfg.key] = [...options];
@@ -1025,7 +1030,6 @@
           applyFilters();
         });
 
-        // Tombol Clear di dalam dropdown
         btnClearAll.addEventListener('click', (e) => {
           e.stopPropagation();
           selectedFilters[cfg.key] = [];
@@ -1036,7 +1040,6 @@
 
         updateBtnLabel(btn, cfg.label, selectedFilters[cfg.key]);
 
-        // Toggle buka/tutup dropdown
         btn.addEventListener('click', (e) => {
           e.stopPropagation();
           document.querySelectorAll('.multiselect-dropdown').forEach(d => { 
@@ -1049,13 +1052,12 @@
         });
       });
 
-      // Menutup dropdown jika mengklik area luar
       document.addEventListener('click', () => {
         document.querySelectorAll('.multiselect-dropdown').forEach(d => d.classList.remove('show'));
       });
 
       const mainSearchInput = document.getElementById('search-input');
-      if (mainSearchInput) mainSearchInput.addEventListener('input', applyFilters);
+      if (mainSearchInput) mainSearchInput.addEventListener('input', () => applyFilters());
 
       const resetBtn = document.getElementById('reset-btn');
       if (resetBtn) resetBtn.addEventListener('click', resetFilters);
@@ -1069,7 +1071,7 @@
       else span.textContent = `${defaultLabel} (${selectedArray.length})`;
     }
 
-    function applyFilters() {
+    function applyFilters(isReset = false) {
       const searchInput = document.getElementById('search-input');
       const searchVal = searchInput ? searchInput.value.toLowerCase() : '';
 
@@ -1097,6 +1099,48 @@
 
       closeRightRadiusPanel();
       updateDashboard();
+
+      // Jika sedang reset atau kembali ke kondisi default nasional, kembalikan tampilan utuh Indonesia (termasuk Papua)
+      if (isReset || isDefaultFilterState()) {
+        map.setView([-2.548926, 118.014863], 5, { duration: 1.5 });
+      } else {
+        autoZoomToFilteredStores();
+      }
+    }
+
+    function isDefaultFilterState() {
+      const searchInput = document.getElementById('search-input');
+      const hasSearch = searchInput && searchInput.value.trim() !== '';
+      const hasRegionFilter = selectedFilters.region.length > 0;
+      const hasCityFilter = selectedFilters.city.length > 0;
+      const hasPartnerFilter = selectedFilters.partner.length > 0;
+      
+      return !hasSearch && !hasRegionFilter && !hasCityFilter && !hasPartnerFilter;
+    }
+
+    function autoZoomToFilteredStores() {
+      if (filteredStores.length === 0) return;
+
+      const validCoords = filteredStores
+        .map(store => {
+          const lat = parseNum(store["Latitude"]);
+          const lng = parseNum(store["Longitude"]);
+          return (!isNaN(lat) && !isNaN(lng)) ? [lat, lng] : null;
+        })
+        .filter(coord => coord !== null);
+
+      if (validCoords.length === 0) return;
+
+      if (validCoords.length === 1) {
+        map.flyTo(validCoords[0], 14, { duration: 1.5 });
+      } else {
+        const bounds = L.latLngBounds(validCoords);
+        map.fitBounds(bounds, { 
+          padding: [50, 50], 
+          maxZoom: 13, 
+          duration: 1.5 
+        });
+      }
     }
 
     function resetFilters() {
@@ -1110,7 +1154,6 @@
           updateBtnLabel(container.querySelector('.multiselect-btn'), cfg.label, selectedFilters[cfg.key]);
           container.querySelectorAll('input[type="checkbox"]').forEach(cb => { cb.checked = selectedFilters[cfg.key].includes(cb.value); });
           
-          // Reset juga input search di dalam dropdown jika ada yang terisi
           const dropdownSearch = container.querySelector('.dropdown-search-input');
           if (dropdownSearch) {
             dropdownSearch.value = '';
@@ -1120,7 +1163,8 @@
       });
 
       closeRightRadiusPanel();
-      applyFilters();
+      // Panggil applyFilters dengan parameter true agar peta kembali menampilkan seluruh Indonesia
+      applyFilters(true);
     }
 
     function updateDashboard() {
@@ -1206,6 +1250,8 @@
 
         const marker = L.marker([lat, lng], { icon: createMapPinIcon(store["Status"], currentZoom) });
         const name = store["Store Name"] || store["Mall Name"] || store["Name"] || 'Xiaomi Store';
+        const partner = store["Partner"] || '-';
+        const region = store["Region"] || '-';
         const storeGrade = getGradeVal(store);
         
         const rawCost = parseNum(store["Rental Cost"]);
@@ -1228,13 +1274,28 @@
           ? `<div class="maps-link-container" style="margin-top:4px;"><a href="${mapsLink}" target="_blank" rel="noopener noreferrer" class="btn-maps-link">📍 Maps Link</a></div>` 
           : '';
 
-        marker.bindPopup(`
+        // TOOLTIP HOVER
+        const tooltipContent = `
+          <div style="line-height: 1.2;">
+            <strong>${name}</strong><br>
+            <span style="color: #475569; font-size: 9.5px;">🏢 ${partner} | 🗺️ ${region}</span>
+          </div>
+        `;
+        marker.bindTooltip(tooltipContent, {
+          permanent: false,
+          direction: 'top',
+          offset: [0, -25],
+          className: 'store-hover-tooltip'
+        });
+
+        // POPUP KLIK
+        const popupContent = `
           <div style="font-weight:bold; font-size:15px; margin-bottom:4px;">${name}</div>
           <div style="font-size:11px; color:#666; margin-bottom:6px;">${store["Address"] || ''}</div>
           ${mapsBtnHtml}
           <div style="font-size:11px; line-height:1.5; margin-top:6px; border-top:1px dashed #e2e8f0; padding-top:6px;">
-            <b>Partner:</b> ${store["Partner"] || '-'}<br>
-            <b>Region:</b> ${store["Region"] || '-'}<br>
+            <b>Partner:</b> ${partner}<br>
+            <b>Region:</b> ${region}<br>
             <b>Mall Grade:</b> ${storeGrade || '-'}<br>
             <b>Status:</b> ${store["Status"]}<br>
             <b>Store Size / Area:</b> ${store["Store Size"] || '-'} sqm<br>
@@ -1243,7 +1304,8 @@
             <b>Daily Traffic (Est):</b> ${dailyTraffic}<br>
             <b>Monthly Traffic (Est):</b> ${monthlyTraffic}
           </div>
-        `);
+        `;
+        marker.bindPopup(popupContent);
 
         marker.on('click', (e) => {
           L.DomEvent.stopPropagation(e);
@@ -1272,10 +1334,13 @@
       if (isNaN(targetLat) || isNaN(targetLng)) return;
 
       const targetCityNorm = normalizeCityName(currentActiveStore["City"] || '');
+      
       const sameCityStores = filteredStores.filter(store => {
-        if (store["Latitude"] === currentActiveStore["Latitude"] && store["Longitude"] === currentActiveStore["Longitude"]) return false;
         return normalizeCityName(store["City"] || '') === targetCityNorm && targetCityNorm !== '';
-      }).map(store => ({ ...store, distance: getDistanceInKm(targetLat, targetLng, parseNum(store["Latitude"]), parseNum(store["Longitude"])) }))
+      }).map(store => ({ 
+        ...store, 
+        distance: getDistanceInKm(targetLat, targetLng, parseNum(store["Latitude"]), parseNum(store["Longitude"])) 
+      }))
       .sort((a, b) => a.distance - b.distance);
 
       connectionLinesGroup.clearLayers();
@@ -1291,14 +1356,21 @@
         document.querySelector('.map-container').appendChild(panel);
       }
 
-      let locationsHtml = sameCityStoresSorted.length === 0 ? `<div class="no-store-city">Tidak ada store lain di ${cityName || 'kota ini'}.</div>` : '';
+      let locationsHtml = sameCityStoresSorted.length === 0 ? `<div class="no-store-city">Tidak ada store di ${cityName || 'kota ini'}.</div>` : '';
+      
       sameCityStoresSorted.forEach(store => {
         const name = store["Store Name"] || store["Mall Name"] || store["Name"];
+        const activeStoreName = activeStore["Store Name"] || activeStore["Mall Name"] || activeStore["Name"];
+        
+        const isCurrentActive = (name === activeStoreName);
+        const itemStyle = isCurrentActive ? 'border: 1px solid #ea580c; background-color: #fff7ed; padding: 6px; border-radius: 6px; margin-bottom: 6px;' : 'border-bottom: 1px dashed #e2e8f0; padding-bottom: 6px; margin-bottom: 6px;';
+        const activeIndicator = isCurrentActive ? '<span style="font-size:9px; background:#ea580c; color:#fff; padding:1px 5px; border-radius:4px; margin-left:5px;">Sedang Dipilih</span>' : '';
+
         locationsHtml += `
-          <div class="radius-location-item">
+          <div class="radius-location-item" style="${itemStyle}">
             <div class="loc-item-header">
-              <div class="loc-item-name">${name}</div>
-              <div class="loc-item-dist">${formatDistance(store.distance)}</div>
+              <div class="loc-item-name">${name} ${activeIndicator}</div>
+              <div class="loc-item-dist">${isCurrentActive ? 'Pusat' : formatDistance(store.distance)}</div>
             </div>
             <div class="loc-item-sub">${store["Status"]} • ${store["City"]} • ${store["Province"]}</div>
           </div>
