@@ -60,48 +60,64 @@
       font-weight: 500;
     }
 
-    /* ================= STATS ================= */
+    /* ================= STATS & HEADER LEGEND ================= */
+    .header-right-group {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
     .stats-container {
       display: flex;
       gap: 10px;
+      flex: 1;
+      max-width: 720px;
     }
 
     .stat-card {
       background: #ffffff;
       border: 1px solid #e2e8f0;
       border-radius: 10px;
-      padding: 6px 12px;
+      padding: 8px 12px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      min-width: 130px;
-      gap: 10px;
+      flex: 1;
+      min-width: 0;
+      gap: 8px;
     }
 
     .stat-content {
       display: flex;
       flex-direction: column;
+      min-width: 0;
     }
 
     .stat-label {
-      font-size: 9.5px;
+      font-size: 9px;
       font-weight: 700;
       color: #64748b;
-      letter-spacing: 0.4px;
+      letter-spacing: 0.3px;
       text-transform: uppercase;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .stat-content h2 {
-      font-size: 20px;
+      font-size: 19px;
       font-weight: 800;
       line-height: 1.1;
-      margin: 1px 0;
+      margin: 2px 0;
     }
 
     .stat-sub {
-      font-size: 9.5px;
+      font-size: 9px;
       color: #94a3b8;
       font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .stat-orange h2 { color: #ea580c; }
@@ -124,6 +140,29 @@
     .purple-icon { background-color: #faf5ff; color: #9333ea; }
     .green-icon  { background-color: #f0fdf4; color: #059669; }
 
+    /* HEADER LEGEND */
+    .header-legend {
+      display: flex;
+      gap: 14px;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: #1e293b;
+      align-items: center;
+      padding: 0 4px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
     /* ================= LAYOUT ================= */
     .main-layout {
       display: flex;
@@ -135,7 +174,7 @@
 
     /* ================= SIDEBAR ================= */
     .sidebar {
-      width: 350px;
+      width: 345px;
       background: #ffffff;
       border-right: 1px solid #e2e8f0;
       display: flex;
@@ -350,6 +389,7 @@
       flex-direction: column;
       gap: 10px;
       background: #f8fafc;
+      scroll-behavior: smooth;
     }
 
     .store-card {
@@ -366,6 +406,12 @@
       border-color: #ea580c;
       box-shadow: 0 4px 10px rgba(234, 88, 12, 0.06);
       transform: translateY(-1px);
+    }
+
+    .store-card.highlight-card {
+      border-color: #ea580c !important;
+      background-color: #fff7ed !important;
+      box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.15) !important;
     }
 
     .card-header {
@@ -457,7 +503,6 @@
       align-items: center;
     }
 
-    /* TOOLTIP HOVER STYLE */
     .store-hover-tooltip {
       background: rgba(255, 255, 255, 0.95) !important;
       border: 1px solid #cbd5e1 !important;
@@ -469,7 +514,7 @@
       border-top-color: rgba(255, 255, 255, 0.95) !important;
     }
 
-    /* ================= MAP CONTAINER & LEGEND ================= */
+    /* ================= MAP CONTAINER ================= */
     .map-container {
       flex: 1;
       height: 100%;
@@ -481,42 +526,57 @@
       height: 100%;
     }
 
-    .map-legend {
+    /* Map Style Switcher UI (Updated: Equal size & semi-transparent) */
+    .map-style-switcher {
       position: absolute;
-      top: 14px;
-      right: 14px;
-      background: white;
-      padding: 8px 12px;
-      border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-      display: flex;
-      gap: 12px;
+      top: 15px;
+      right: 15px;
       z-index: 1000;
-      font-size: 11.5px;
-      font-weight: 600;
-      color: #1e293b;
-      align-items: center;
-    }
-
-    .legend-item {
       display: flex;
-      align-items: center;
-      gap: 5px;
+      width: 210px;
+      background: rgba(255, 255, 255, 0.35);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+      border: 1px solid rgba(203, 213, 225, 0.6);
+      overflow: hidden;
     }
 
-    .legend-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
+    .map-style-btn {
+      flex: 1;
+      padding: 8px 0;
+      font-size: 11.5px;
+      font-weight: 700;
+      border: none;
+      background: transparent;
+      color: #334155;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s;
+    }
+
+    .map-style-btn:not(:last-child) {
+      border-right: 1px solid rgba(226, 232, 240, 0.6);
+    }
+
+    .map-style-btn:hover {
+      background: rgba(241, 245, 249, 0.6);
+      color: #0f172a;
+    }
+
+    .map-style-btn.active {
+      background: rgba(234, 88, 12, 0.85);
+      color: #ffffff;
     }
 
     /* ================= RIGHT PANEL ================= */
     .right-info-panel {
       position: absolute;
-      top: 60px;
+      top: 65px;
       right: 14px;
       width: 330px;
-      max-height: calc(100% - 74px);
+      max-height: calc(100% - 79px);
       background: #ffffff;
       border-radius: 10px;
       box-shadow: 0 10px 24px rgba(0, 0, 0, 0.15);
@@ -530,7 +590,6 @@
       opacity: 1;
     }
 
-    /* Panel bergeser ke kanan keluar layar saat di-collapse */
     .right-info-panel.collapsed {
       transform: translateX(120%);
       opacity: 0;
@@ -551,11 +610,6 @@
     }
     .btn-toggle-collapse:hover {
       background-color: rgba(0, 0, 0, 0.3);
-    }
-
-    @keyframes slideInRight {
-      from { opacity: 0; transform: translateX(20px); }
-      to { opacity: 1; transform: translateX(0); }
     }
 
     .radius-header {
@@ -700,49 +754,65 @@
       </div>
     </div>
 
-    <!-- STATS -->
-    <div class="stats-container">
-      <div class="stat-card">
-        <div class="stat-content">
-          <span class="stat-label">Total Stores</span>
-          <h2 id="stat-total">0</h2>
-          <span class="stat-sub">Active & Pipeline</span>
+    <!-- STATS & HEADER LEGEND GROUP -->
+    <div class="header-right-group">
+      <!-- STATS -->
+      <div class="stats-container">
+        <div class="stat-card">
+          <div class="stat-content">
+            <span class="stat-label">Total Stores</span>
+            <h2 id="stat-total">0</h2>
+            <span class="stat-sub">Active & Pipeline</span>
+          </div>
+          <div class="stat-icon orange-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+          </div>
         </div>
-        <div class="stat-icon orange-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+
+        <div class="stat-card">
+          <div class="stat-content">
+            <span class="stat-label">Operations</span>
+            <h2 id="stat-existing">0</h2>
+            <span class="stat-sub">Active Stores</span>
+          </div>
+          <div class="stat-icon blue-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-content">
+            <span class="stat-label">Upcoming</span>
+            <h2 id="stat-progress">0</h2>
+            <span class="stat-sub">Pipeline & 2027</span>
+          </div>
+          <div class="stat-icon purple-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-content">
+            <span class="stat-label">No Store In Mall</span>
+            <h2 id="stat-nostore">0</h2>
+            <span class="stat-sub">Mall Candidates</span>
+          </div>
+          <div class="stat-icon green-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+          </div>
         </div>
       </div>
 
-      <div class="stat-card">
-        <div class="stat-content">
-          <span class="stat-label">Operations</span>
-          <h2 id="stat-existing">0</h2>
-          <span class="stat-sub">Active Stores</span>
+      <!-- HEADER LEGEND -->
+      <div class="header-legend">
+        <div class="legend-item">
+          <span class="legend-dot" style="background-color: #ff6700;"></span> Existing
         </div>
-        <div class="stat-icon blue-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+        <div class="legend-item">
+          <span class="legend-dot" style="background-color: #2563eb;"></span> Progress
         </div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-content">
-          <span class="stat-label">Upcoming</span>
-          <h2 id="stat-progress">0</h2>
-          <span class="stat-sub">Pipeline Store Plan & 2027</span>
-        </div>
-        <div class="stat-icon purple-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
-        </div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-content">
-          <span class="stat-label">No Store In Mall</span>
-          <h2 id="stat-nostore">0</h2>
-          <span class="stat-sub">Mall Candidates</span>
-        </div>
-        <div class="stat-icon green-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+        <div class="legend-item">
+          <span class="legend-dot" style="background-color: #059669;"></span> No Store
         </div>
       </div>
     </div>
@@ -808,20 +878,8 @@
       <div class="store-list" id="store-list"></div>
     </aside>
 
-    <!-- MAP CONTAINER & LEGEND -->
+    <!-- MAP CONTAINER -->
     <main class="map-container">
-      <div class="map-legend">
-        <div class="legend-item">
-          <span class="legend-dot" style="background-color: #ff6700;"></span> Existing
-        </div>
-        <div class="legend-item">
-          <span class="legend-dot" style="background-color: #2563eb;"></span> Progress
-        </div>
-        <div class="legend-item">
-          <span class="legend-dot" style="background-color: #059669;"></span> No Store
-        </div>
-      </div>
-
       <div id="map"></div>
     </main>
 
@@ -831,11 +889,46 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <script>
-    const map = L.map('map').setView([-2.548926, 118.014863], 5);
+    const standardLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors',
+      maxZoom: 19
+    });
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors'
-    }).addTo(map);
+    const cleanMapLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      attribution: '© OpenStreetMap contributors & CARTO',
+      maxZoom: 19
+    });
+
+    const map = L.map('map', {
+      layers: [standardLayer]
+    }).setView([-2.548926, 118.014863], 5);
+
+    const mapContainerEl = document.querySelector('.map-container');
+    const switcherDiv = document.createElement('div');
+    switcherDiv.className = 'map-style-switcher';
+    switcherDiv.innerHTML = `
+      <button class="map-style-btn active" data-style="standard">Standard</button>
+      <button class="map-style-btn" data-style="clean">Clean Maps</button>
+    `;
+    mapContainerEl.appendChild(switcherDiv);
+
+    const styleButtons = switcherDiv.querySelectorAll('.map-style-btn');
+    styleButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        map.removeLayer(standardLayer);
+        map.removeLayer(cleanMapLayer);
+
+        styleButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        const styleType = btn.getAttribute('data-style');
+        if (styleType === 'standard') {
+          standardLayer.addTo(map);
+        } else {
+          cleanMapLayer.addTo(map);
+        }
+      });
+    });
 
     let allStores = [];
     let filteredStores = [];
@@ -971,12 +1064,12 @@
     loadStoresData();
 
     const filterConfigs = [
-      { id: 'ms-partner', key: 'partner', field: 'Partner', label: 'All Partner' },
-      { id: 'ms-region', key: 'region', field: 'Region', label: 'All Region' },
-      { id: 'ms-province', key: 'province', field: 'Province', label: 'All Province' },
-      { id: 'ms-city', key: 'city', field: 'City', label: 'All City' },
-      { id: 'ms-type', key: 'type', field: 'Type', label: 'All Type' },
-      { id: 'ms-grade', key: 'grade', customGetter: getGradeVal, label: 'All Mall Grade' },
+      { id: 'ms-partner', key: 'partner', field: 'Partner', label: 'Partner' },
+      { id: 'ms-region', key: 'region', field: 'Region', label: 'Region' },
+      { id: 'ms-province', key: 'province', field: 'Province', label: 'Province' },
+      { id: 'ms-city', key: 'city', field: 'City', label: 'City' },
+      { id: 'ms-type', key: 'type', field: 'Type', label: 'Type' },
+      { id: 'ms-grade', key: 'grade', customGetter: getGradeVal, label: 'Mall Grade' },
       { id: 'ms-status', key: 'status', customOptions: ['Existing', 'Progress', 'No Store'], label: 'Status' }
     ];
 
@@ -1191,7 +1284,7 @@
       document.getElementById('stat-existing').textContent = existing;
       document.getElementById('stat-progress').textContent = progress;
       document.getElementById('stat-nostore').textContent = noStore;
-      document.getElementById('stores-found-text').textContent = `${totalAll} location found`;
+      document.getElementById('stores-found-text').textContent = `${totalAll} lokasi ditemukan`;
 
       renderStoreList();
       renderMarkers();
@@ -1202,7 +1295,7 @@
       if (!listContainer) return;
       listContainer.innerHTML = '';
 
-      filteredStores.forEach(store => {
+      filteredStores.forEach((store, index) => {
         const status = store["Status"] || 'No Store';
         const stUpper = status.toUpperCase();
         let badgeClass = stUpper.includes('EXISTING') ? 'badge-existing' : (stUpper.includes('PROGRESS') ? 'badge-progress' : 'badge-nostore');
@@ -1222,6 +1315,7 @@
 
         const card = document.createElement('div');
         card.className = 'store-card';
+        card.id = `store-card-${index}`;
         card.innerHTML = `
           <div class="card-header">
             <div class="card-title">${name}</div>
@@ -1259,7 +1353,7 @@
       markersLayer.clearLayers();
       const currentZoom = map.getZoom();
 
-      filteredStores.forEach(store => {
+      filteredStores.forEach((store, index) => {
         const lat = parseNum(store["Latitude"]);
         const lng = parseNum(store["Longitude"]);
         if (isNaN(lat) || isNaN(lng)) return;
@@ -1321,6 +1415,18 @@
           marker.closeTooltip();
           marker.openPopup();
           map.flyTo([lat, lng], 14);
+
+          const cardEl = document.getElementById(`store-card-${index}`);
+          if (cardEl) {
+            cardEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            document.querySelectorAll('.store-card').forEach(c => c.classList.remove('highlight-card'));
+            cardEl.classList.add('highlight-card');
+            setTimeout(() => {
+              cardEl.classList.remove('highlight-card');
+            }, 2500);
+          }
+
           if (selectedFilters.city.length > 0) {
             drawDistanceLinesFromPoint(lat, lng, name);
           }
@@ -1399,10 +1505,11 @@
           dashArray: '4, 6'
         }).addTo(connectionLinesGroup);
 
-        const ratio = 0.82; 
-        const labelLat = lat + (store.lat - lat) * ratio;
-        const labelLng = lng + (store.lng - lng) * ratio;
-        
+        const ratio = 0.82;
+
+        let labelLat = lat + (store.lat - lat) * ratio;
+        let labelLng = lng + (store.lng - lng) * ratio;
+
         const distStr = formatDistance(store.distance);
 
         L.marker([labelLat, labelLng], {
@@ -1420,7 +1527,7 @@
               white-space: nowrap;
             ">${distStr}</div>`,
             iconSize: [50, 18],
-            iconAnchor: [25, 9]
+            iconAnchor: [25, -5]
           }),
           interactive: false
         }).addTo(connectionLinesGroup);
@@ -1483,7 +1590,6 @@
         e.stopPropagation();
         panel.classList.toggle('collapsed');
         
-        // Garis dan titik tumpu TIDAK dihapus saat di-hide, hanya mengubah teks tombol toggle
         if (panel.classList.contains('collapsed')) {
           btnCollapse.textContent = '◄ Show';
         } else {
