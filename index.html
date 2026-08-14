@@ -140,26 +140,63 @@
     .purple-icon { background-color: #faf5ff; color: #9333ea; }
     .green-icon  { background-color: #f0fdf4; color: #059669; }
 
-    /* HEADER LEGEND */
+    /* HEADER LEGEND FILTER BUTTONS */
     .header-legend {
       display: flex;
-      gap: 14px;
-      font-size: 11.5px;
-      font-weight: 600;
-      color: #1e293b;
+      gap: 8px;
       align-items: center;
       padding: 0 4px;
     }
 
-    .legend-item {
+    .legend-filter-btn {
       display: flex;
       align-items: center;
-      gap: 5px;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #475569;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      padding: 6px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      opacity: 0.5;
+    }
+
+    .legend-filter-btn:hover {
+      border-color: #94a3b8;
+      background: #f8fafc;
+    }
+
+    .legend-filter-btn.active {
+      opacity: 1;
+      border-color: #0f172a;
+      background: #f8fafc;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+
+    .legend-filter-btn[data-status="Existing"].active {
+      border-color: #ff6700;
+      background: #fff7ed;
+      color: #c2410c;
+    }
+
+    .legend-filter-btn[data-status="Progress"].active {
+      border-color: #2563eb;
+      background: #eff6ff;
+      color: #1e40af;
+    }
+
+    .legend-filter-btn[data-status="No Store"].active {
+      border-color: #059669;
+      background: #f0fdf4;
+      color: #065f46;
     }
 
     .legend-dot {
-      width: 10px;
-      height: 10px;
+      width: 9px;
+      height: 9px;
       border-radius: 50%;
     }
 
@@ -256,6 +293,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      position: relative;
       transition: all 0.2s;
     }
 
@@ -263,6 +301,12 @@
       background: #ffffff;
       border-color: #94a3b8;
       color: #0f172a;
+    }
+
+    .custom-multiselect.has-active .multiselect-btn {
+      border-color: #ea580c;
+      color: #ea580c;
+      background-color: #fff7ed;
     }
 
     .multiselect-dropdown {
@@ -526,7 +570,6 @@
       height: 100%;
     }
 
-    /* Map Style Switcher UI (Updated: Equal size & semi-transparent) */
     .map-style-switcher {
       position: absolute;
       top: 15px;
@@ -803,17 +846,17 @@
         </div>
       </div>
 
-      <!-- HEADER LEGEND -->
+      <!-- HEADER LEGEND / STATUS FILTER BUTTONS -->
       <div class="header-legend">
-        <div class="legend-item">
+        <button class="legend-filter-btn active" data-status="Existing">
           <span class="legend-dot" style="background-color: #ff6700;"></span> Existing
-        </div>
-        <div class="legend-item">
+        </button>
+        <button class="legend-filter-btn active" data-status="Progress">
           <span class="legend-dot" style="background-color: #2563eb;"></span> Progress
-        </div>
-        <div class="legend-item">
+        </button>
+        <button class="legend-filter-btn" data-status="No Store">
           <span class="legend-dot" style="background-color: #059669;"></span> No Store
-        </div>
+        </button>
       </div>
     </div>
   </header>
@@ -861,11 +904,6 @@
               <button class="multiselect-btn"><span>Mall Grade</span> ▼</button>
               <div class="multiselect-dropdown"></div>
             </div>
-          </div>
-
-          <div class="custom-multiselect full-width" id="ms-status">
-            <button class="multiselect-btn"><span>Status</span> ▼</button>
-            <div class="multiselect-dropdown"></div>
           </div>
         </div>
       </div>
@@ -944,7 +982,7 @@
       city: [],
       type: [],
       grade: [],
-      status: ['Existing', 'Progress', 'EXISTING', 'PROGRESS']
+      status: ['Existing', 'Progress']
     };
 
     function getPinSizeByZoom(zoomLevel) {
@@ -1058,6 +1096,7 @@
 
       allStores = [...formattedStores, ...formattedCandidates];
       setupMultiSelects();
+      setupLegendFilters();
       applyFilters();
     }
 
@@ -1069,8 +1108,7 @@
       { id: 'ms-province', key: 'province', field: 'Province', label: 'Province' },
       { id: 'ms-city', key: 'city', field: 'City', label: 'City' },
       { id: 'ms-type', key: 'type', field: 'Type', label: 'Type' },
-      { id: 'ms-grade', key: 'grade', customGetter: getGradeVal, label: 'Mall Grade' },
-      { id: 'ms-status', key: 'status', customOptions: ['Existing', 'Progress', 'No Store'], label: 'Status' }
+      { id: 'ms-grade', key: 'grade', customGetter: getGradeVal, label: 'Mall Grade' }
     ];
 
     function setupMultiSelects() {
@@ -1081,12 +1119,7 @@
         const btn = container.querySelector('.multiselect-btn');
         const dropdown = container.querySelector('.multiselect-dropdown');
 
-        let options = [];
-        if (cfg.customOptions) {
-          options = cfg.customOptions;
-        } else {
-          options = [...new Set(allStores.map(item => cfg.customGetter ? cfg.customGetter(item) : item[cfg.field]).filter(Boolean))].sort();
-        }
+        let options = [...new Set(allStores.map(item => cfg.customGetter ? cfg.customGetter(item) : item[cfg.field]).filter(Boolean))].sort();
 
         dropdown.innerHTML = `
           <input type="text" class="dropdown-search-input" placeholder="Search ${cfg.label.toLowerCase()}...">
@@ -1117,7 +1150,7 @@
             } else {
               selectedFilters[cfg.key] = selectedFilters[cfg.key].filter(v => v.toLowerCase() !== optVal.toLowerCase());
             }
-            updateBtnLabel(btn, cfg.label, selectedFilters[cfg.key], options);
+            updateBtnLabel(container, btn, cfg.label, selectedFilters[cfg.key], options);
             applyFilters();
           });
           optionsListContainer.appendChild(label);
@@ -1135,7 +1168,7 @@
           e.stopPropagation();
           selectedFilters[cfg.key] = [...options];
           optionsListContainer.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = true);
-          updateBtnLabel(btn, cfg.label, selectedFilters[cfg.key], options);
+          updateBtnLabel(container, btn, cfg.label, selectedFilters[cfg.key], options);
           applyFilters();
         });
 
@@ -1143,11 +1176,11 @@
           e.stopPropagation();
           selectedFilters[cfg.key] = [];
           optionsListContainer.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
-          updateBtnLabel(btn, cfg.label, selectedFilters[cfg.key], options);
+          updateBtnLabel(container, btn, cfg.label, selectedFilters[cfg.key], options);
           applyFilters();
         });
 
-        updateBtnLabel(btn, cfg.label, selectedFilters[cfg.key], options);
+        updateBtnLabel(container, btn, cfg.label, selectedFilters[cfg.key], options);
 
         btn.addEventListener('click', (e) => {
           e.stopPropagation();
@@ -1168,13 +1201,38 @@
       if (resetBtn) resetBtn.addEventListener('click', resetFilters);
     }
 
-    function updateBtnLabel(btn, defaultLabel, selectedArray, totalOptions = []) {
+    function setupLegendFilters() {
+      const legendBtns = document.querySelectorAll('.legend-filter-btn');
+      legendBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const statusVal = btn.getAttribute('data-status');
+          btn.classList.toggle('active');
+
+          if (btn.classList.contains('active')) {
+            if (!selectedFilters.status.includes(statusVal)) {
+              selectedFilters.status.push(statusVal);
+            }
+          } else {
+            selectedFilters.status = selectedFilters.status.filter(s => s.toLowerCase() !== statusVal.toLowerCase());
+          }
+          applyFilters();
+        });
+      });
+    }
+
+    function updateBtnLabel(container, btn, defaultLabel, selectedArray, totalOptions = []) {
       const span = btn.querySelector('span');
       if (!span) return;
       
       const activeCount = totalOptions.length > 0 
         ? totalOptions.filter(opt => selectedArray.some(sel => sel.toLowerCase() === opt.toLowerCase())).length 
         : selectedArray.length;
+
+      if (activeCount > 0) {
+        container.classList.add('has-active');
+      } else {
+        container.classList.remove('has-active');
+      }
 
       if (activeCount === 0) {
         span.textContent = defaultLabel;
@@ -1253,17 +1311,22 @@
       if (searchInput) searchInput.value = '';
 
       filterConfigs.forEach(cfg => {
-        selectedFilters[cfg.key] = cfg.key === 'status' ? ['Existing', 'Progress'] : [];
+        selectedFilters[cfg.key] = [];
         const container = document.getElementById(cfg.id);
         if (container) {
-          let options = cfg.customOptions || [];
-          if (!cfg.customOptions) {
-            options = [...new Set(allStores.map(item => cfg.customGetter ? cfg.customGetter(item) : item[cfg.field]).filter(Boolean))].sort();
-          }
-          updateBtnLabel(container.querySelector('.multiselect-btn'), cfg.label, selectedFilters[cfg.key], options);
-          container.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-            cb.checked = selectedFilters[cfg.key].some(v => v.toLowerCase() === cb.value.toLowerCase());
-          });
+          let options = [...new Set(allStores.map(item => cfg.customGetter ? cfg.customGetter(item) : item[cfg.field]).filter(Boolean))].sort();
+          updateBtnLabel(container, container.querySelector('.multiselect-btn'), cfg.label, selectedFilters[cfg.key], options);
+          container.querySelectorAll('input[type="checkbox"]').forEach(cb => { cb.checked = false; });
+        }
+      });
+
+      selectedFilters.status = ['Existing', 'Progress'];
+      document.querySelectorAll('.legend-filter-btn').forEach(btn => {
+        const st = btn.getAttribute('data-status');
+        if (st === 'Existing' || st === 'Progress') {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
         }
       });
 
@@ -1284,7 +1347,7 @@
       document.getElementById('stat-existing').textContent = existing;
       document.getElementById('stat-progress').textContent = progress;
       document.getElementById('stat-nostore').textContent = noStore;
-      document.getElementById('stores-found-text').textContent = `${totalAll} lokasi ditemukan`;
+      document.getElementById('stores-found-text').textContent = `${totalAll} locations found`;
 
       renderStoreList();
       renderMarkers();
