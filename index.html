@@ -275,10 +275,6 @@
       flex: 1;
     }
 
-    .custom-multiselect.full-width {
-      width: 100%;
-    }
-
     .multiselect-btn {
       width: 100%;
       padding: 7px 10px;
@@ -1535,12 +1531,19 @@
       }
       connectionLinesGroup.clearLayers();
 
+      // LOGO XIAOMI DIPERKECIL DAN TANPA BORDER PUTIH
+      const xiaomiLogoHtml = `
+        <div style="width: 28px; height: 28px; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.3)); display: flex; align-items: center; justify-content: center;">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/a/ae/Xiaomi_logo_%282021-%29.svg" alt="Xiaomi Logo" style="width: 100%; height: 100%; border-radius: 9px; display: block;">
+        </div>
+      `;
+
       customClickMarker = L.marker([lat, lng], {
         icon: L.divIcon({
-          className: 'custom-click-pin-icon',
-          html: `<div style="background-color: #dc2626; width: 16px; height: 16px; border: 3px solid #ffffff; border-radius: 50%; box-shadow: 0 0 8px rgba(0,0,0,0.5);"></div>`,
-          iconSize: [16, 16],
-          iconAnchor: [8, 8]
+          className: 'custom-xiaomi-click-icon',
+          html: xiaomiLogoHtml,
+          iconSize: [28, 28],
+          iconAnchor: [14, 14]
         })
       }).addTo(map);
 
@@ -1562,10 +1565,10 @@
 
       targetStores.forEach((store, index) => {
         const polyline = L.polyline([[lat, lng], [store.lat, store.lng]], {
-          color: '#1e293b',
-          weight: 2,
-          opacity: 0.6,
-          dashArray: '4, 6'
+          color: '#334155',
+          weight: 1.5,
+          opacity: 0.5,
+          dashArray: '3, 5'
         }).addTo(connectionLinesGroup);
 
         const ratio = 0.82;
@@ -1580,17 +1583,17 @@
             className: 'distance-badge-wrapper',
             html: `<div style="
               background: #ffffff;
-              border: 1.5px solid #ea580c;
+              border: 1px solid #ea580c;
               color: #c2410c;
               font-weight: 800;
-              font-size: 9.5px;
-              padding: 2px 6px;
+              font-size: 9px;
+              padding: 1px 5px;
               border-radius: 4px;
-              box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+              box-shadow: 0 1px 3px rgba(0,0,0,0.15);
               white-space: nowrap;
             ">${distStr}</div>`,
-            iconSize: [50, 18],
-            iconAnchor: [25, -5]
+            iconSize: [50, 16],
+            iconAnchor: [25, -4]
           }),
           interactive: false
         }).addTo(connectionLinesGroup);
