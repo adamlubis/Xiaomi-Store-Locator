@@ -566,49 +566,6 @@
       height: 100%;
     }
 
-    .map-style-switcher {
-      position: absolute;
-      top: 15px;
-      right: 15px;
-      z-index: 1000;
-      display: flex;
-      width: 210px;
-      background: rgba(255, 255, 255, 0.35);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-      border: 1px solid rgba(203, 213, 225, 0.6);
-      overflow: hidden;
-    }
-
-    .map-style-btn {
-      flex: 1;
-      padding: 8px 0;
-      font-size: 11.5px;
-      font-weight: 700;
-      border: none;
-      background: transparent;
-      color: #334155;
-      cursor: pointer;
-      text-align: center;
-      transition: all 0.2s;
-    }
-
-    .map-style-btn:not(:last-child) {
-      border-right: 1px solid rgba(226, 232, 240, 0.6);
-    }
-
-    .map-style-btn:hover {
-      background: rgba(241, 245, 249, 0.6);
-      color: #0f172a;
-    }
-
-    .map-style-btn.active {
-      background: rgba(234, 88, 12, 0.85);
-      color: #ffffff;
-    }
-
     /* ================= RIGHT PANEL ================= */
     .right-info-panel {
       position: absolute;
@@ -928,41 +885,9 @@
       maxZoom: 19
     });
 
-    const cleanMapLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-      attribution: '© OpenStreetMap contributors & CARTO',
-      maxZoom: 19
-    });
-
     const map = L.map('map', {
       layers: [standardLayer]
     }).setView([-2.548926, 118.014863], 5);
-
-    const mapContainerEl = document.querySelector('.map-container');
-    const switcherDiv = document.createElement('div');
-    switcherDiv.className = 'map-style-switcher';
-    switcherDiv.innerHTML = `
-      <button class="map-style-btn active" data-style="standard">Standard</button>
-      <button class="map-style-btn" data-style="clean">Clean Maps</button>
-    `;
-    mapContainerEl.appendChild(switcherDiv);
-
-    const styleButtons = switcherDiv.querySelectorAll('.map-style-btn');
-    styleButtons.forEach(btn => {
-      btn.addEventListener('click', () => {
-        map.removeLayer(standardLayer);
-        map.removeLayer(cleanMapLayer);
-
-        styleButtons.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-
-        const styleType = btn.getAttribute('data-style');
-        if (styleType === 'standard') {
-          standardLayer.addTo(map);
-        } else {
-          cleanMapLayer.addTo(map);
-        }
-      });
-    });
 
     let allStores = [];
     let filteredStores = [];
@@ -1531,7 +1456,6 @@
       }
       connectionLinesGroup.clearLayers();
 
-      // LOGO XIAOMI DIPERKECIL DAN TANPA BORDER PUTIH
       const xiaomiLogoHtml = `
         <div style="width: 28px; height: 28px; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.3)); display: flex; align-items: center; justify-content: center;">
           <img src="https://upload.wikimedia.org/wikipedia/commons/a/ae/Xiaomi_logo_%282021-%29.svg" alt="Xiaomi Logo" style="width: 100%; height: 100%; border-radius: 9px; display: block;">
