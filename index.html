@@ -969,6 +969,16 @@
       return Number(cleaned).toLocaleString('en-US');
     }
 
+    function formatCurrency(val) {
+      if (val === undefined || val === null || val === '' || val === '-') return '-';
+      if (typeof val === 'string' && val.includes('Rp')) return val;
+      const num = parseNum(val);
+      if (isNaN(num)) {
+        return String(val).replace(/\./g, ',');
+      }
+      return 'Rp ' + new Intl.NumberFormat('en-US').format(num);
+    }
+
     function getGradeVal(store) {
       return store["Grade"] || store["Mall Grade"] || store["Mall_Grade"] || store["Grade Mall"] || store["GRADE"] || store["Store Grade"] || '';
     }
@@ -1268,7 +1278,7 @@
       document.getElementById('stat-existing').textContent = existing;
       document.getElementById('stat-progress').textContent = progress;
       document.getElementById('stat-nostore').textContent = noStore;
-      document.getElementById('stores-found-text').textContent = `${totalAll} locations found`;
+      document.getElementById('stores-found-text').textContent = `${totalAll} location found`;
 
       renderStoreList();
       renderMarkers();
@@ -1289,11 +1299,13 @@
 
         const lat = parseNum(store["Latitude"]);
         const lng = parseNum(store["Longitude"]);
-        const populationFormatted = formatPopulation(store['POPULATION']);
+        
+        const populationRaw = store['Population'] || store['POPULATION'] || store['City Population'];
+        const populationFormatted = formatPopulation(populationRaw);
 
         let mapsLink = getTextVal(store['Google Maps Link']);
-        if (mapsLink === '-') {
-          mapsLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${name} ${store["City"] || ''}`.trim())}`;
+        if (mapsLink === '-' || mapsLink.startsWith('1all')) {
+          mapsLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${name}${store["City"] || ''}`.trim())}`;
         }
         const mapsBtnHtml = `<div class="maps-link-container"><a href="${mapsLink}" target="_blank" rel="noopener noreferrer" class="btn-maps-link">📍 Maps Link</a></div>`;
 
@@ -1351,13 +1363,16 @@
         const storeSize = getTextVal(store["Store Size"]);
         const rawCost = parseNum(store["Rental Cost"]);
         const rentalCost = !isNaN(rawCost) ? `Rp ${new Intl.NumberFormat('id-ID').format(rawCost)}` : getTextVal(store["Rental Cost"]);
-        const dailyTraffic = getTextVal(store["Daily Traffic (Est)"]);
-        const monthlyTraffic = getTextVal(store["Monthly Traffic (Est)"]);
-        const populationFormatted = formatPopulation(store['POPULATION']);
+        
+        const populationRaw = store['Population'] || store['POPULATION'] || store['City Population'];
+        const populationFormatted = formatPopulation(populationRaw);
+
+        const gdpYear = formatCurrency(store['GDP/Year']);
+        const gdpMonth = formatCurrency(store['GDP/Month']);
 
         let mapsLink = getTextVal(store['Google Maps Link']);
-        if (mapsLink === '-') {
-          mapsLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${name} ${store["City"] || ''}`.trim())}`;
+        if (mapsLink === '-' || mapsLink.startsWith('1all')) {
+          mapsLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${name}${store["City"] || ''}`.trim())}`;
         }
         const mapsBtnHtml = `<div class="maps-link-container" style="margin-top:4px;"><a href="${mapsLink}" target="_blank" rel="noopener noreferrer" class="btn-maps-link">📍 Maps Link</a></div>`;
 
@@ -1378,9 +1393,9 @@
             <b>Mall Grade:</b> ${storeGrade || '-'}<br>
             <b>Store Size:</b> ${storeSize} m²<br>
             <b>Rental Cost:</b> ${rentalCost}<br>
-            <b>Daily Traffic:</b> ${dailyTraffic}<br>
-            <b>Monthly Traffic:</b> ${monthlyTraffic}<br>
-            <b>City Population:</b> ${populationFormatted}
+            <b>City Population:</b> ${populationFormatted}<br>
+            <b>GDP/Year:</b> ${gdpYear}<br>
+            <b>GDP/Month:</b> ${gdpMonth}
           </div>
         `, { autoClose: false, closeOnClick: false });
 
