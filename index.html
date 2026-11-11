@@ -71,7 +71,7 @@
       display: flex;
       gap: 10px;
       flex: 1;
-      max-width: 720px;
+      max-width: 860px;
     }
 
     .stat-card {
@@ -123,6 +123,7 @@
     .stat-orange h2 { color: #ea580c; }
     .stat-blue h2   { color: #2563eb; }
     .stat-purple h2 { color: #9333ea; }
+    .stat-amber h2  { color: #d97706; }
     .stat-green h2  { color: #059669; }
 
     .stat-icon {
@@ -138,6 +139,7 @@
     .orange-icon { background-color: #fff7ed; color: #ea580c; }
     .blue-icon   { background-color: #eff6ff; color: #2563eb; }
     .purple-icon { background-color: #faf5ff; color: #9333ea; }
+    .amber-icon  { background-color: #fffbeb; color: #d97706; }
     .green-icon  { background-color: #f0fdf4; color: #059669; }
 
     /* HEADER LEGEND FILTER BUTTONS */
@@ -151,6 +153,9 @@
     .legend-filter-btn {
       display: flex;
       align-items: center;
+      justify-content: center;
+      flex: 1;
+      min-width: 95px;
       gap: 6px;
       font-size: 11px;
       font-weight: 700;
@@ -186,6 +191,12 @@
       border-color: #2563eb;
       background: #eff6ff;
       color: #1e40af;
+    }
+
+    .legend-filter-btn[data-status="2027"].active {
+      border-color: #d97706;
+      background: #fffbeb;
+      color: #b45309;
     }
 
     .legend-filter-btn[data-status="No Store"].active {
@@ -487,6 +498,7 @@
 
     .badge-existing { background-color: #ffedd5; color: #c2410c; }
     .badge-progress { background-color: #dbeafe; color: #1e40af; }
+    .badge-2027     { background-color: #fef3c7; color: #b45309; }
     .badge-nostore  { background-color: #d1fae5; color: #065f46; }
 
     .card-meta-row {
@@ -780,10 +792,21 @@
           <div class="stat-content">
             <span class="stat-label">Upcoming</span>
             <h2 id="stat-progress">0</h2>
-            <span class="stat-sub">Pipeline & 2027</span>
+            <span class="stat-sub">Pipeline</span>
           </div>
           <div class="stat-icon purple-icon">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-content">
+            <span class="stat-label">2027</span>
+            <h2 id="stat-2027">0</h2>
+            <span class="stat-sub">Planned 2027</span>
+          </div>
+          <div class="stat-icon amber-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
           </div>
         </div>
 
@@ -806,6 +829,9 @@
         </button>
         <button class="legend-filter-btn active" data-status="Progress">
           <span class="legend-dot" style="background-color: #2563eb;"></span> Progress
+        </button>
+        <button class="legend-filter-btn active" data-status="2027">
+          <span class="legend-dot" style="background-color: #d97706;"></span> 2027
         </button>
         <button class="legend-filter-btn" data-status="No Store">
           <span class="legend-dot" style="background-color: #059669;"></span> No Store
@@ -903,7 +929,7 @@
       city: [],
       type: [],
       grade: [],
-      status: ['Existing', 'Progress']
+      status: ['Existing', 'Progress', '2027']
     };
 
     function getPinSizeByZoom(zoomLevel) {
@@ -920,7 +946,10 @@
       let lightColor = '#FF6700'; 
       let darkColor  = '#D95300';
 
-      if (st.includes('PROGRESS') || st.includes('UPCOMING')) {
+      if (st.includes('2027')) {
+        lightColor = '#D97706';
+        darkColor  = '#B45309';
+      } else if (st.includes('PROGRESS') || st.includes('UPCOMING')) {
         lightColor = '#2563EB';  
         darkColor  = '#1D4ED8';
       } else if (st.includes('NO STORE') || st.includes('POTENTIAL') || st.includes('NO MALL')) {
@@ -1251,10 +1280,10 @@
         }
       });
 
-      selectedFilters.status = ['Existing', 'Progress'];
+      selectedFilters.status = ['Existing', 'Progress', '2027'];
       document.querySelectorAll('.legend-filter-btn').forEach(btn => {
         const st = btn.getAttribute('data-status');
-        if (st === 'Existing' || st === 'Progress') {
+        if (st === 'Existing' || st === 'Progress' || st === '2027') {
           btn.classList.add('active');
         } else {
           btn.classList.remove('active');
@@ -1271,12 +1300,14 @@
     function updateDashboard() {
       const existing = filteredStores.filter(s => String(s["Status"]).toLowerCase() === 'existing').length;
       const progress = filteredStores.filter(s => String(s["Status"]).toLowerCase() === 'progress').length;
-      const noStore = filteredStores.filter(s => String(s["Status"]).toLowerCase() === 'no store').length;
-      const totalAll = filteredStores.length;
+      const stat2027  = filteredStores.filter(s => String(s["Status"]).toLowerCase() === '2027').length;
+      const noStore  = filteredStores.filter(s => String(s["Status"]).toLowerCase() === 'no store').length;
+      const totalAll  = filteredStores.length;
 
       document.getElementById('stat-total').textContent = totalAll;
       document.getElementById('stat-existing').textContent = existing;
       document.getElementById('stat-progress').textContent = progress;
+      document.getElementById('stat-2027').textContent = stat2027;
       document.getElementById('stat-nostore').textContent = noStore;
       document.getElementById('stores-found-text').textContent = `${totalAll} location found`;
 
@@ -1292,7 +1323,15 @@
       filteredStores.forEach((store, index) => {
         const status = store["Status"] || 'No Store';
         const stUpper = status.toUpperCase();
-        let badgeClass = stUpper.includes('EXISTING') ? 'badge-existing' : (stUpper.includes('PROGRESS') ? 'badge-progress' : 'badge-nostore');
+        let badgeClass = 'badge-nostore';
+        if (stUpper.includes('EXISTING')) {
+          badgeClass = 'badge-existing';
+        } else if (stUpper.includes('2027')) {
+          badgeClass = 'badge-2027';
+        } else if (stUpper.includes('PROGRESS')) {
+          badgeClass = 'badge-progress';
+        }
+
         const storeGrade = getGradeVal(store);
         const gradeBadgeHtml = storeGrade ? `<span class="badge" style="background:#e0e7ff; color:#3730a3;">${storeGrade}</span>` : '';
         const name = store["Store Name"] || store["Mall Name"] || store["Name"] || 'Xiaomi Store';
@@ -1489,7 +1528,7 @@
       const targetStores = filteredStores
         .filter(store => {
           const st = String(store["Status"]).toUpperCase();
-          return st.includes('EXISTING') || st.includes('PROGRESS');
+          return st.includes('EXISTING') || st.includes('PROGRESS') || st.includes('2027');
         })
         .map(store => {
           const sLat = parseNum(store["Latitude"]);
@@ -1550,7 +1589,7 @@
         document.querySelector('.map-container').appendChild(panel);
       }
 
-      let locationsHtml = targetStores.length === 0 ? `<div class="no-store-city">Tidak ada store Existing/Progress ditemukan.</div>` : '';
+      let locationsHtml = targetStores.length === 0 ? `<div class="no-store-city">Tidak ada store Existing/Progress/2027 ditemukan.</div>` : '';
       
       targetStores.forEach(store => {
         const name = store["Store Name"] || store["Mall Name"] || store["Name"];
